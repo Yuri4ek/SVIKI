@@ -1,106 +1,146 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, Button, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-import { Link } from 'expo-router';
+import {
+  TextInput,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  View,
+  useColorScheme,
+} from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Colors } from '@/constants/theme';
+import { createStyles } from '@/constants/auth.styles';
 
-export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+export default function AuthScreen() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
+  const styles = createStyles(theme);
+
+  const [isRegisterMode, setIsRegisterMode] = useState(true);
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const handleLogin = () => {
-    // Простая mock-проверка (в реальном проекте замените на вызов API)
-    if (email.trim() === '' || password.trim() === '') {
-      Alert.alert('Ошибка', 'Пожалуйста, заполните все поля');
+  const handleRegister = () => {
+    if (!identifier || !password || !confirmPassword) {
+      Alert.alert('Ошибка', 'Заполните все поля');
       return;
     }
-
-    // Пример фиктивной успешной авторизации (можно изменить условия)
-    if (email.toLowerCase() === 'test@example.com' && password === '123456') {
-      setIsAuthenticated(true);
-    } else {
-      Alert.alert('Ошибка авторизации', 'Неверный email или пароль');
+    if (password !== confirmPassword) {
+      Alert.alert('Ошибка', 'Пароли не совпадают');
+      return;
     }
+    if (!agreementAccepted) {
+      Alert.alert('Ошибка', 'Примите соглашение');
+      return;
+    }
+    setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setEmail('');
-    setPassword('');
+  const handleLogin = () => {
+    if (identifier === 'test@example.com' && password === '123456') {
+      setIsAuthenticated(true);
+    } else {
+      Alert.alert('Ошибка', 'Неверные данные');
+    }
   };
 
   if (isAuthenticated) {
     return (
       <ThemedView style={styles.container}>
-        <ThemedText type="title">Добро пожаловать!</ThemedText>
-        <ThemedText>Вы успешно вошли в систему.</ThemedText>
-        <Button title="Выйти" onPress={handleLogout} />
-        {/* Здесь можно добавить Link на другие экраны, например модал */}
-        <Link href="/modal" style={styles.link}>
-          <ThemedText type="link">Открыть модальный экран</ThemedText>
-        </Link>
+        <ThemedText type="title" style={styles.title}>Добро пожаловать!</ThemedText>
+        <TouchableOpacity style={styles.mainButton} onPress={() => setIsAuthenticated(false)}>
+          <ThemedText style={styles.mainButtonText}>Выйти</ThemedText>
+        </TouchableOpacity>
       </ThemedView>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
       style={styles.flex}
     >
       <ThemedView style={styles.container}>
-        <ThemedText type="title">Авторизация</ThemedText>
+        <ThemedText type="title" style={styles.title}>
+          {isRegisterMode ? 'Создать аккаунт' : 'С возвращением'}
+        </ThemedText>
 
         <TextInput
           style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
+          placeholder="Почта или телефон"
+          placeholderTextColor={theme.icon}
+          value={identifier}
+          onChangeText={setIdentifier}
           autoCapitalize="none"
         />
 
         <TextInput
           style={styles.input}
           placeholder="Пароль"
+          placeholderTextColor={theme.icon}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
         />
 
-        <Button title="Войти" onPress={handleLogin} />
+        {isRegisterMode && (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Повторите пароль"
+              placeholderTextColor={theme.icon}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
 
-        {/* Опционально: ссылки на регистрацию или восстановление пароля */}
-        <Link href="/modal" style={styles.link}>
-          <ThemedText type="link">Забыли пароль?</ThemedText>
-        </Link>
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              onPress={() => setAgreementAccepted(!agreementAccepted)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.checkbox, agreementAccepted && styles.checkboxChecked]}>
+                {agreementAccepted && <MaterialCommunityIcons name="check" size={16} color={theme.background} />}
+              </View>
+              <ThemedText style={styles.checkboxText}>Принимаю пользовательское соглашение</ThemedText>
+            </TouchableOpacity>
+          </>
+        )}
+
+        <TouchableOpacity 
+          style={styles.mainButton} 
+          onPress={isRegisterMode ? handleRegister : handleLogin}
+        >
+          <ThemedText style={styles.mainButtonText}>
+            {isRegisterMode ? 'Зарегистрироваться' : 'Войти'}
+          </ThemedText>
+        </TouchableOpacity>
+
+        <View style={styles.rowButtons}>
+          <TouchableOpacity 
+            style={styles.secondaryButton} 
+            onPress={() => setIsRegisterMode(!isRegisterMode)}
+          >
+            <ThemedText style={styles.secondaryButtonText}>
+              {isRegisterMode ? 'Войти' : 'Регистрация'}
+            </ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.secondaryButton} 
+            onPress={() => Alert.alert('Госуслуги', 'Интеграция в процессе')}
+          >
+            <ThemedText style={styles.secondaryButtonText}>Госуслуги</ThemedText>
+          </TouchableOpacity>
+        </View>
       </ThemedView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  input: {
-    width: '80%',
-    marginVertical: 10,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    backgroundColor: '#fff', // можно адаптировать под тему
-  },
-  link: {
-    marginTop: 20,
-  },
-});

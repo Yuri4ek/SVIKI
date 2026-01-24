@@ -1,0 +1,91 @@
+import { StyleSheet } from 'react-native';
+import { Colors } from './theme';
+
+export const createStyles = (theme: typeof Colors.light) => StyleSheet.create({
+  flex: { flex: 1, backgroundColor: theme.background },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  title: {
+    marginBottom: 32,
+    color: theme.onPrimaryContainer,
+    fontSize: 28,
+    fontWeight: '600',
+  },
+  input: {
+    width: '100%',
+    height: 56,
+    backgroundColor: theme.surfaceContainer,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginVertical: 8,
+    fontSize: 16,
+    color: theme.onSecondaryContainer,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginVertical: 16,
+    paddingHorizontal: 4,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: theme.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  checkboxChecked: {
+    backgroundColor: theme.primary,
+  },
+  checkboxText: {
+    fontSize: 14,
+    color: theme.outline,
+  },
+  mainButton: {
+    width: '100%',
+    height: 56,
+    backgroundColor: theme.primary,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  mainButtonText: {
+    color: theme.onPrimary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  rowButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 24,
+    gap: 12,
+  },
+  secondaryButton: {
+    flex: 1,
+    height: 48,
+    backgroundColor: theme.secondaryContainer,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: theme.onSecondaryContainer,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+});
