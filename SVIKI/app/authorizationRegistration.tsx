@@ -14,7 +14,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/styles/theme";
-import { createStyles } from "@/styles/auth.styles";
+import { createAuthStyles } from "@/styles/auth.styles";
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -27,7 +27,7 @@ export default function AuthScreen() {
 
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
-  const styles = createStyles(theme);
+  const styles = createAuthStyles(theme);
 
   const handleRegister = () => {
     if (!identifier || !password || !confirmPassword) {

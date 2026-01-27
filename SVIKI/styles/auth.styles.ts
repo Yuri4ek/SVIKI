@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import { Colors } from './theme';
 
-export const createStyles = (theme: typeof Colors.light) => StyleSheet.create({
+export const createAuthStyles = (theme: typeof Colors.light) => StyleSheet.create({
   flex: { flex: 1, backgroundColor: theme.background },
   container: {
     flex: 1,

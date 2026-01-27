@@ -1,68 +1,40 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, useColorScheme } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { createSettingsStyles } from '@/styles';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const theme = useColorScheme() ?? 'light';
+  const styles = createSettingsStyles(theme);
 
   const handleLogout = () => {
-    // Здесь обычно очищается токен авторизации
-    // После этого отправляем пользователя обратно на вход
     router.replace('/authorizationRegistration');
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Настройки профиля</Text>
-      
-      <View style={styles.infoBox}>
-        <Text style={styles.text}>Пользователь: SVIKI User</Text>
-        <Text style={styles.text}>Версия приложения: 1.0.0</Text>
-      </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Настройки</Text>
+        
+        <View style={styles.infoBox}>
+          <Text style={styles.text}>
+            <Text style={styles.label}>Пользователь: </Text>SVIKI User
+          </Text>
+          <Text style={styles.text}>
+            <Text style={styles.label}>Версия: </Text>1.0.0 (M3 Design)
+          </Text>
+        </View>
 
-      <TouchableOpacity 
-        style={styles.logoutButton} 
-        onPress={handleLogout}
-      >
-        <Text style={styles.logoutText}>Выйти из аккаунта</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity 
+          style={styles.logoutButton} 
+          onPress={handleLogout}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.logoutText}>Выйти из аккаунта</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  infoBox: {
-    padding: 15,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    marginBottom: 30,
-  },
-  text: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 5,
-  },
-  logoutButton: {
-    backgroundColor: '#FF3B30',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  logoutText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-});

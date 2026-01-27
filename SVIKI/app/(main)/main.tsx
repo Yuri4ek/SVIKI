@@ -1,14 +1,16 @@
-import { View, Text, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, useColorScheme } from 'react-native';
+import { createMainStyles } from '@/styles';
 
-export default function MainScreen() {
+const MainPage = () => {
+  const theme = useColorScheme() ?? 'light';
+  const styles = createMainStyles(theme);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Добро пожаловать в SVIKI!</Text>
+      <Text style={styles.header}>SVIKI</Text>
     </View>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 20, fontWeight: 'bold' },
-});
+export default MainPage;
