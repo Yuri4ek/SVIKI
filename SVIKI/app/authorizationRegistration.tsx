@@ -13,8 +13,8 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { Colors } from "@/constants/theme";
-import { createStyles } from "@/constants/auth.styles";
+import { Colors } from "@/styles/theme";
+import { createStyles } from "@/styles/auth.styles";
 
 export default function AuthScreen() {
   const router = useRouter();

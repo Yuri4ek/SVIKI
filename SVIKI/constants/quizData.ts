@@ -13,12 +13,7 @@ export const QUIZ_DATA: QuestionType[] = [
   {
     id: '1',
     question: "У вас есть действующие кредиты?",
-    options: ["Да", "Нет"],
-    subQuestion: {
-      triggerValue: "Да",
-      question: "Укажите примерную сумму:",
-      options: ["до 100т", "до 500т", "до 1 млн", "свыше 1 млн"]
-    }
+    options: ["Да", "Нет"]
   },
   {
     id: '2',
@@ -33,22 +28,12 @@ export const QUIZ_DATA: QuestionType[] = [
   {
     id: '4',
     question: "Есть действующие просрочки?",
-    options: ["Да", "Нет"],
-    subQuestion: {
-      triggerValue: "Да",
-      question: "Сколько месяцев длится просрочка и просужены ли долги?",
-      options: ["1 мес", "2 мес", "3 мес", "Более 3х мес", "Долги просужены"]
-    }
+    options: ["Да", "Нет"]
   },
   {
     id: '5',
     question: "Есть залоговое кредитование или ипотека?",
-    options: ["Да", "Нет"],
-    subQuestion: {
-      triggerValue: "Да",
-      question: "Примерный остаток по ипотеке:",
-      options: ["до 1 млн", "до 2 млн", "до 3 млн", "свыше 3 млн"]
-    }
+    options: ["Да", "Нет"]
   },
   {
     id: '6',
@@ -58,12 +43,7 @@ export const QUIZ_DATA: QuestionType[] = [
   {
     id: '7',
     question: "Есть автомобиль в собственности?",
-    options: ["Да", "Нет"],
-    subQuestion: {
-      triggerValue: "Да",
-      question: "Стоимость автомобиля:",
-      options: ["до 1 млн", "свыше 1 млн"]
-    }
+    options: ["Да", "Нет"]
   },
   {
     id: '8',
@@ -73,11 +53,6 @@ export const QUIZ_DATA: QuestionType[] = [
   {
     id: '9',
     question: "Долги ФССП (судебные приставы)?",
-    options: ["Да", "Нет"],
-    subQuestion: {
-      triggerValue: "Да",
-      question: "Какая сумма долга у приставов:",
-      options: ["до 100т", "до 500т", "до 1 млн", "до 3 млн", "свыше 3 млн"]
-    }
+    options: ["Да", "Нет"]
   }
 ];
