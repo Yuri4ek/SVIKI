@@ -24,7 +24,6 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreementAccepted, setAgreementAccepted] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
@@ -43,33 +42,16 @@ export default function AuthScreen() {
       Alert.alert("Ошибка", "Примите соглашение");
       return;
     }
-    setIsAuthenticated(true);
+    router.replace("/quiz");
   };
 
   const handleLogin = () => {
     if (identifier === "1234" && password === "1234") {
-      setIsAuthenticated(true);
       router.replace("/main");
     } else {
       Alert.alert("Ошибка", "Неверные данные");
     }
   };
-
-  if (isAuthenticated) {
-    return (
-      <ThemedView style={styles.container}>
-        <ThemedText type="title" style={styles.title}>
-          Добро пожаловать!
-        </ThemedText>
-        <TouchableOpacity
-          style={styles.mainButton}
-          onPress={() => setIsAuthenticated(false)}
-        >
-          <ThemedText style={styles.mainButtonText}>Выйти</ThemedText>
-        </TouchableOpacity>
-      </ThemedView>
-    );
-  }
 
   return (
     <KeyboardAvoidingView
