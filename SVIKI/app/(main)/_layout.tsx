@@ -12,6 +12,20 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="chat"
+        options={{
+          title: 'Чат',
+          tabBarIcon: ({ color }) => <Ionicons name="text" size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="users"
+        options={{
+          title: 'Пользователи',
+          tabBarIcon: ({ color }) => <Ionicons name="man" size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Настройки',
