@@ -12,27 +12,27 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+import { saveUserRole, getUserRole, UserRole } from "@/utils";
+
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/styles/theme";
 import { createAuthStyles } from "@/styles";
 
-type UserRole = "Клиент" | "Агент" | "Юрист" | null;
 type OrgType = "ИП" | "ООО" | "Самозанятый" | null;
 
 export default function AuthScreen() {
   const router = useRouter();
 
-  const [isRegisterMode, setIsRegisterMode] = useState(true);
+  const [role, setRole] = useState<UserRole>("Клиент");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreementAccepted, setAgreementAccepted] = useState(false);
-
-  // Состояния для ролей и партнерских данных
-  const [role, setRole] = useState<UserRole>(null);
-  const [isRolePickerOpen, setIsRolePickerOpen] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  const [isRegisterMode, setIsRegisterMode] = useState(true);
+  const [isRolePickerOpen, setIsRolePickerOpen] = useState(false);
 
   // Поля для Агентов и Юристов (ТЗ 3.2)
   const [orgType, setOrgType] = useState<OrgType>(null);
@@ -121,7 +121,7 @@ export default function AuthScreen() {
                     <TouchableOpacity
                       key={item}
                       style={{ padding: 15, borderBottomWidth: 1, borderBottomColor: theme.outlineVariant }}
-                      onPress={() => { setRole(item); setIsRolePickerOpen(false); }}
+                      onPress={() => { setRole(item); setIsRolePickerOpen(false); saveUserRole(item); }}
                     >
                       <ThemedText>{item}</ThemedText>
                     </TouchableOpacity>
