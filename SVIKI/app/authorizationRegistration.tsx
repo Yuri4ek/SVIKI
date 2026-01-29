@@ -8,15 +8,17 @@ import {
   TouchableOpacity,
   View,
   useColorScheme,
+  ScrollView,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/styles/theme";
-import { createAuthStyles } from "@/styles/auth.styles";
+import { createAuthStyles } from "@/styles";
 
 type UserRole = "Клиент" | "Агент" | "Юрист" | null;
+type OrgType = "ИП" | "ООО" | "Самозанятый" | null;
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -27,22 +29,39 @@ export default function AuthScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreementAccepted, setAgreementAccepted] = useState(false);
 
-  // Функциональные переменные
+  // Состояния для ролей и партнерских данных
   const [role, setRole] = useState<UserRole>(null);
   const [isRolePickerOpen, setIsRolePickerOpen] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  // Поля для Агентов и Юристов (ТЗ 3.2)
+  const [orgType, setOrgType] = useState<OrgType>(null);
+  const [inn, setInn] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [bik, setBik] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
 
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
   const styles = createAuthStyles(theme);
 
   const roles: UserRole[] = ["Клиент", "Агент", "Юрист"];
+  const orgTypes: OrgType[] = ["ИП", "ООО", "Самозанятый"];
 
   const handleRegister = () => {
     if (!role) {
       Alert.alert("Ошибка", "Выберите роль");
       return;
     }
+
+    // Валидация партнерских данных (для Агента/Юриста)
+    if (role !== "Клиент") {
+      if (!orgType || !inn || !bik || !bankAccount) {
+        Alert.alert("Ошибка", "Заполните данные организации и реквизиты");
+        return;
+      }
+    }
+
     if (!identifier || !password || !confirmPassword) {
       Alert.alert("Ошибка", "Заполните все поля");
       return;
@@ -55,12 +74,18 @@ export default function AuthScreen() {
       Alert.alert("Ошибка", "Примите соглашение");
       return;
     }
-    router.replace("/quiz");
+
+    const verificationType = identifier.includes("@") ? "email" : "phone";
+    
+    // Передаем роль в параметры, чтобы страница верификации знала, куда вести дальше
+    router.push({
+      pathname: "/verification",
+      params: { type: verificationType, role: role },
+    });
   };
 
   const handleLogin = () => {
     if (identifier === "1234" && password === "1234") {
-      console.log("Remember Me:", rememberMe);
       router.replace("/main");
     } else {
       Alert.alert("Ошибка", "Неверные данные");
@@ -72,168 +97,98 @@ export default function AuthScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.flex}
     >
-      <ThemedView style={styles.container}>
-        {/* Заголовок как в первом варианте */}
-        <ThemedText type="title" style={styles.title}>
-          {isRegisterMode ? "Добро пожаловать в SVIKI" : "С возвращением в SVIKI"}
-        </ThemedText>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <ThemedView style={styles.container}>
+          <ThemedText type="title" style={styles.title}>
+            {isRegisterMode ? "Добро пожаловать в SVIKI" : "С возвращением в SVIKI"}
+          </ThemedText>
 
-        {/* Выбор роли (Выпадающий список) */}
-        {isRegisterMode && (
-          <View style={{ width: "100%", marginBottom: 12, zIndex: 10 }}>
-            <TouchableOpacity
-              style={[
-                styles.input,
-                {
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  borderColor: isRolePickerOpen ? theme.primary : theme.outlineVariant,
-                },
-              ]}
-              onPress={() => setIsRolePickerOpen(!isRolePickerOpen)}
-              activeOpacity={0.7}
-            >
-              <ThemedText style={{ color: role ? theme.onSurface : theme.onSurfaceVariant }}>
-                {role ? `Роль: ${role}` : "Выберите роль"}
-              </ThemedText>
-              <MaterialCommunityIcons
-                name={isRolePickerOpen ? "chevron-up" : "chevron-down"}
-                size={20}
-                color={theme.icon}
-              />
-            </TouchableOpacity>
-
-            {isRolePickerOpen && (
-              <View
-                style={{
-                  backgroundColor: theme.surfaceContainer,
-                  borderRadius: 12,
-                  marginTop: 4,
-                  borderWidth: 1,
-                  borderColor: theme.outlineVariant,
-                  overflow: "hidden",
-                }}
+          {isRegisterMode && (
+            <View style={{ width: "100%", marginBottom: 12, zIndex: 10 }}>
+              <TouchableOpacity
+                style={[styles.input, { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }]}
+                onPress={() => setIsRolePickerOpen(!isRolePickerOpen)}
               >
-                {roles.map((item) => (
+                <ThemedText style={{ color: role ? theme.onSurface : theme.onSurfaceVariant }}>
+                  {role ? `Роль: ${role}` : "Выберите роль"}
+                </ThemedText>
+                <MaterialCommunityIcons name="chevron-down" size={20} color={theme.icon} />
+              </TouchableOpacity>
+
+              {isRolePickerOpen && (
+                <View style={{ backgroundColor: theme.surfaceContainer, borderRadius: 12, marginTop: 4, borderWidth: 1, borderColor: theme.outlineVariant }}>
+                  {roles.map((item) => (
+                    <TouchableOpacity
+                      key={item}
+                      style={{ padding: 15, borderBottomWidth: 1, borderBottomColor: theme.outlineVariant }}
+                      onPress={() => { setRole(item); setIsRolePickerOpen(false); }}
+                    >
+                      <ThemedText>{item}</ThemedText>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Партнерские поля (ТЗ 3.2) */}
+          {isRegisterMode && (role === "Агент" || role === "Юрист") && (
+            <View style={{ width: "100%", marginBottom: 10 }}>
+              <ThemedText style={{ marginBottom: 8, fontWeight: '600' }}>Тип организации</ThemedText>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                {orgTypes.map((t) => (
                   <TouchableOpacity
-                    key={item}
-                    style={{
-                      padding: 15,
-                      backgroundColor: role === item ? theme.primaryContainer : "transparent",
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme.outlineVariant,
-                    }}
-                    onPress={() => {
-                      setRole(item);
-                      setIsRolePickerOpen(false);
-                    }}
+                    key={t}
+                    style={[{ padding: 10, borderRadius: 8, borderWidth: 1, borderColor: theme.outlineVariant, width: '31%', alignItems: 'center' }, orgType === t && { backgroundColor: theme.primaryContainer, borderColor: theme.primary }]}
+                    onPress={() => setOrgType(t)}
                   >
-                    <ThemedText style={role === item ? { color: theme.primary, fontWeight: "600" } : {}}>
-                      {item}
-                    </ThemedText>
+                    <ThemedText style={{ fontSize: 12 }}>{t}</ThemedText>
                   </TouchableOpacity>
                 ))}
               </View>
-            )}
-          </View>
-        )}
-
-        <TextInput
-          style={styles.input}
-          placeholder="Почта или телефон"
-          placeholderTextColor={theme.icon}
-          value={identifier}
-          onChangeText={setIdentifier}
-          autoCapitalize="none"
-        />
-
-        <TextInput
-          style={styles.input}
-          placeholder="Пароль"
-          placeholderTextColor={theme.icon}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-
-        {isRegisterMode ? (
-          <>
-            <TextInput
-              style={styles.input}
-              placeholder="Повторите пароль"
-              placeholderTextColor={theme.icon}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-            />
-
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setAgreementAccepted(!agreementAccepted)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.checkbox, agreementAccepted && styles.checkboxChecked]}>
-                {agreementAccepted && (
-                  <MaterialCommunityIcons name="check" size={16} color={theme.background} />
-                )}
-              </View>
-              <ThemedText style={styles.checkboxText}>
-                Принимаю пользовательское соглашение
-              </ThemedText>
-            </TouchableOpacity>
-          </>
-        ) : (
-          /* Галка "Запомнить меня" для входа */
-          <TouchableOpacity
-            style={styles.checkboxContainer}
-            onPress={() => setRememberMe(!rememberMe)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
-              {rememberMe && (
-                <MaterialCommunityIcons name="check" size={16} color={theme.background} />
-              )}
+              <TextInput style={styles.input} placeholder="ИНН (для автозаполнения)" placeholderTextColor={theme.icon} value={inn} onChangeText={setInn} keyboardType="number-pad" />
+              <TextInput style={styles.input} placeholder="Наименование организации" placeholderTextColor={theme.icon} value={companyName} onChangeText={setCompanyName} />
+              <TextInput style={styles.input} placeholder="БИК банка" placeholderTextColor={theme.icon} value={bik} onChangeText={setBik} keyboardType="number-pad" />
+              <TextInput style={styles.input} placeholder="Расчетный счет" placeholderTextColor={theme.icon} value={bankAccount} onChangeText={setBankAccount} keyboardType="number-pad" />
             </View>
-            <ThemedText style={styles.checkboxText}>
-              Запомнить меня
-            </ThemedText>
-          </TouchableOpacity>
-        )}
+          )}
 
-        <TouchableOpacity
-          style={styles.mainButton}
-          onPress={isRegisterMode ? handleRegister : handleLogin}
-        >
-          <ThemedText style={styles.mainButtonText}>
-            {isRegisterMode ? "Зарегистрироваться" : "Войти"}
-          </ThemedText>
-        </TouchableOpacity>
+          <TextInput style={styles.input} placeholder="Почта или телефон" placeholderTextColor={theme.icon} value={identifier} onChangeText={setIdentifier} autoCapitalize="none" />
+          <TextInput style={styles.input} placeholder="Пароль" placeholderTextColor={theme.icon} value={password} onChangeText={setPassword} secureTextEntry />
 
-        {/* Нижние кнопки в оригинальном стиле */}
-        <View style={styles.rowButtons}>
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => {
-              setIsRegisterMode(!isRegisterMode);
-              setIsRolePickerOpen(false);
-            }}
-          >
-            <ThemedText style={styles.secondaryButtonText}>
-              {isRegisterMode ? "Войти" : "Регистрация"}
-            </ThemedText>
+          {isRegisterMode ? (
+            <>
+              <TextInput style={styles.input} placeholder="Повторите пароль" placeholderTextColor={theme.icon} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry />
+              <TouchableOpacity style={styles.checkboxContainer} onPress={() => setAgreementAccepted(!agreementAccepted)}>
+                <View style={[styles.checkbox, agreementAccepted && styles.checkboxChecked]}>
+                  {agreementAccepted && <MaterialCommunityIcons name="check" size={16} color={theme.background} />}
+                </View>
+                <ThemedText style={styles.checkboxText}>Принимаю пользовательское соглашение</ThemedText>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity style={styles.checkboxContainer} onPress={() => setRememberMe(!rememberMe)}>
+              <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                {rememberMe && <MaterialCommunityIcons name="check" size={16} color={theme.background} />}
+              </View>
+              <ThemedText style={styles.checkboxText}>Запомнить меня</ThemedText>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity style={styles.mainButton} onPress={isRegisterMode ? handleRegister : handleLogin}>
+            <ThemedText style={styles.mainButtonText}>{isRegisterMode ? "Зарегистрироваться" : "Войти"}</ThemedText>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => Alert.alert("Госуслуги", "Интеграция в процессе")}
-          >
-            <ThemedText style={styles.secondaryButtonText}>
-              Госуслуги
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
-      </ThemedView>
+          <View style={styles.rowButtons}>
+            <TouchableOpacity style={styles.secondaryButton} onPress={() => setIsRegisterMode(!isRegisterMode)}>
+              <ThemedText style={styles.secondaryButtonText}>{isRegisterMode ? "Войти" : "Регистрация"}</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.secondaryButton} onPress={() => Alert.alert("Госуслуги", "Интеграция в процессе")}>
+              <ThemedText style={styles.secondaryButtonText}>Госуслуги</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </ThemedView>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
