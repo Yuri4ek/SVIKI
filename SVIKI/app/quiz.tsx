@@ -14,11 +14,51 @@ export default function QuizScreen() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   const handleSelect = (questionId: string, value: string) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
+    setAnswers(prev => {
+      const newAnswers = { ...prev, [questionId]: value };
+      // Если это основной вопрос и ответ изменился на "Нет", 
+      // удаляем ответ на подвопрос для чистоты данных
+      if (!questionId.includes('_sub') && value !== QUIZ_DATA.find(q => q.id === questionId)?.subQuestion?.triggerValue) {
+        delete newAnswers[`${questionId}_sub`];
+      }
+      return newAnswers;
+    });
+  };
+
+  // Метод для группировки и вывода данных в консоль
+  const collectAndLogResults = () => {
+    const finalData = QUIZ_DATA.map(q => {
+      const mainAnswer = answers[q.id];
+      const subAnswer = answers[`${q.id}_sub`];
+      
+      return {
+        question: q.question,
+        answer: mainAnswer || "Нет ответа",
+        ...(q.subQuestion && mainAnswer === q.subQuestion.triggerValue && {
+          details: {
+            question: q.subQuestion.question,
+            answer: subAnswer || "Не указано"
+          }
+        })
+      };
+    });
+
+    console.log("=== РЕЗУЛЬТАТЫ АНКЕТЫ ===");
+    console.log(JSON.stringify(finalData, null, 2));
+    console.log("=========================");
+    
+    router.replace('/main');
   };
 
   const isQuizComplete = () => {
-    return QUIZ_DATA.every(q => answers[q.id]);
+    return QUIZ_DATA.every(q => {
+      const hasMainAnswer = !!answers[q.id];
+      const needsSubAnswer = q.subQuestion && answers[q.id] === q.subQuestion.triggerValue;
+      if (needsSubAnswer) {
+        return !!answers[`${q.id}_sub`];
+      }
+      return hasMainAnswer;
+    });
   };
 
   const renderQuestion = ({ item }: { item: QuestionType }) => {
@@ -26,36 +66,38 @@ export default function QuizScreen() {
     const showSubQuestion = item.subQuestion && selectedValue === item.subQuestion.triggerValue;
 
     return (
-      <View style={styles.card}>
-        <Text style={styles.questionText}>{item.question}</Text>
-        <View style={styles.optionsContainer}>
-          {item.options.map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              style={[styles.optionButton, selectedValue === opt && styles.selectedOption]}
-              onPress={() => handleSelect(item.id, opt)}
-            >
-              <Text style={[styles.optionText, selectedValue === opt && styles.selectedOptionText]}>
-                {opt}
-              </Text>
-            </TouchableOpacity>
-          ))}
+      <View>
+        {/* Основной вопрос */}
+        <View style={styles.card}>
+          <Text style={styles.questionText}>{item.question}</Text>
+          <View style={styles.optionsContainer}>
+            {item.options.map((opt) => (
+              <TouchableOpacity
+                key={opt}
+                style={[styles.optionButton, selectedValue === opt && styles.selectedOption]}
+                onPress={() => handleSelect(item.id, opt)}
+              >
+                <Text style={styles.optionText}>{opt}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
+        {/* Подвопрос - теперь выглядит идентично основной карточке */}
         {showSubQuestion && (
-          <View style={styles.subContainer}>
-            <Text style={styles.subQuestionText}>{item.subQuestion?.question}</Text>
+          <View style={styles.card}>
+            <Text style={styles.questionText}>{item.subQuestion?.question}</Text>
             <View style={styles.optionsContainer}>
               {item.subQuestion?.options.map((subOpt) => (
                 <TouchableOpacity
                   key={subOpt}
                   style={[
-                    styles.subOptionButton, 
-                    answers[`${item.id}_sub`] === subOpt && styles.selectedSubOption
+                    styles.optionButton, // Используем тот же стиль, что и у основных кнопок
+                    answers[`${item.id}_sub`] === subOpt && styles.selectedOption
                   ]}
                   onPress={() => handleSelect(`${item.id}_sub`, subOpt)}
                 >
-                  <Text style={styles.subOptionText}>{subOpt}</Text>
+                  <Text style={styles.optionText}>{subOpt}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -67,14 +109,10 @@ export default function QuizScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Анкета клиента</Text>
-      </View>
-
       <FlashList
         data={QUIZ_DATA}
         renderItem={renderQuestion}
-        estimatedItemSize={200}
+        estimatedItemSize={250}
         contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
         keyExtractor={(item) => item.id}
       />
@@ -83,7 +121,7 @@ export default function QuizScreen() {
         <TouchableOpacity 
           style={[styles.submitButton, !isQuizComplete() && styles.disabledButton]}
           disabled={!isQuizComplete()}
-          onPress={() => router.replace('/main')}
+          onPress={collectAndLogResults}
         >
           <Text style={styles.submitButtonText}>Завершить</Text>
         </TouchableOpacity>
