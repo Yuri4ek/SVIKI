@@ -1,142 +1,189 @@
-import React from 'react';
-import { View, Text, ScrollView, useColorScheme, StatusBar } from 'react-native';
-import { createMainStyles } from '@/styles';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  useColorScheme,
+  StatusBar,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createMainStyles } from "@/styles";
 
 const MainPage = () => {
-  const theme = useColorScheme() ?? 'light';
+  const theme = useColorScheme() ?? "light";
   const styles = createMainStyles(theme);
 
-  // Пример данных для демонстрации логики
-  const data = {
-    cars: ['BMW X5', 'Lada Vesta'],
-    carPrices: ['5 000 000 ₽', '1 200 000 ₽'],
-    carLoansCount: 1,
-    carLoanBalances: ['3 400 000 ₽'],
-    carArrears: 'Нет',
-    
-    hasMortgage: 'Да',
-    mortgageBalance: '4 500 000 ₽',
-    additionalProperty: 'Да (Дача)',
-    mortgageArrears: 'Нет',
+  const [quizData, setQuizData] = useState<any>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
-    fsspSum: '0 ₽',
-    fsspDebt: 'Нет',
-
-    taxSum: '1 200 ₽',
-    taxDebt: 'Транспортный налог'
-  };
-
-  const renderValueList = (list: string[], fallback: string = 'Нет') => (
-    <View style={styles.valueList}>
-      {list.length > 0 
-        ? list.map((item, index) => <Text key={index} style={styles.subValue}>{item}</Text>)
-        : <Text style={styles.value}>{fallback}</Text>
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem("user_quiz_data");
+        if (jsonValue != null) setQuizData(JSON.parse(jsonValue));
+      } catch (e) {
+        console.error("Error loading data", e);
       }
-    </View>
-  );
+    };
+    loadData();
+  }, []);
+
+  // Хелперы для получения данных по ID из QUIZ_DATA
+  const getAnswer = (id: string) => quizData?.[id]?.answer || "Нет данных";
+  const getDetails = (id: string) => quizData?.[id]?.details || "";
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <StatusBar barStyle={theme === 'light' ? 'dark-content' : 'light-content'} />
-      
-      <Text style={styles.header}>СВИКИ</Text>
+    <View style={styles.container}>
+      <StatusBar
+        barStyle={theme === "light" ? "dark-content" : "light-content"}
+      />
 
-      {/* Кредитный рейтинг (без СКОР) */}
-      <Text style={styles.sectionTitle}>Кредитный рейтинг</Text>
-      <View style={styles.card}>
-        <View style={styles.scoreGrid}>
-          <View style={styles.scoreItem}>
-            <Text style={styles.scoreValue}>450</Text>
-            <Text style={styles.scoreLabel}>НБКИ</Text>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+        <Text style={styles.header}>СВИКИ</Text>
+
+        {/* Кредитный рейтинг */}
+        <Text style={styles.sectionTitle}>Кредитный рейтинг</Text>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => setShowHistory(true)}
+        >
+          <View style={styles.scoreGrid}>
+            <View style={styles.scoreItem}>
+              <Text style={styles.scoreValue}>450</Text>
+              <Text style={styles.scoreLabel}>НБКИ</Text>
+            </View>
+            <View style={styles.scoreItem}>
+              <Text style={styles.scoreValue}>380</Text>
+              <Text style={styles.scoreLabel}>ОКБ</Text>
+            </View>
           </View>
-          <View style={styles.scoreItem}>
-            <Text style={styles.scoreValue}>380</Text>
-            <Text style={styles.scoreLabel}>ОКБ</Text>
+          <Text
+            style={{
+              textAlign: "center",
+              fontSize: 12,
+              marginTop: 12,
+              opacity: 0.5,
+              color: "#888",
+            }}
+          >
+            Нажмите для просмотра динамики
+          </Text>
+        </TouchableOpacity>
+
+        {/* Автомобили (ID 7, 8) */}
+        <Text style={styles.sectionTitle}>Транспорт</Text>
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Авто в собственности</Text>
+            <Text style={styles.value}>{getAnswer("7")}</Text>
+          </View>
+          {getAnswer("7") === "Да" && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Стоимость</Text>
+              <Text style={styles.value}>{getDetails("7")}</Text>
+            </View>
+          )}
+          <View style={[styles.row, styles.lastRow]}>
+            <Text style={styles.label}>Автокредит</Text>
+            <Text style={styles.value}>
+              {getAnswer("8")}{" "}
+              {getAnswer("8") === "Да" ? `(${getDetails("8")})` : ""}
+            </Text>
           </View>
         </View>
-      </View>
 
-      {/* Дашборд про Автомобили (Заголовок скрыт) */}
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <Text style={styles.label}>Кол-во автомобилей</Text>
-          <Text style={styles.value}>{data.cars.length || 'Нет'}</Text>
+        {/* Ипотека (ID 5, 6) */}
+        <Text style={styles.sectionTitle}>Недвижимость</Text>
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Ипотека</Text>
+            <Text style={styles.value}>{getAnswer("5")}</Text>
+          </View>
+          {getAnswer("5") === "Да" && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Остаток долга</Text>
+              <Text style={styles.value}>{getDetails("5")}</Text>
+            </View>
+          )}
+          <View style={[styles.row, styles.lastRow]}>
+            <Text style={styles.label}>Доп. имущество</Text>
+            <Text style={styles.value}>{getAnswer("6")}</Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Стоимость авто</Text>
-          {renderValueList(data.carPrices)}
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Кол-во Автокредитов</Text>
-          <Text style={styles.value}>{data.carLoansCount || 'Нет'}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Остаток по кредиту</Text>
-          {renderValueList(data.carLoanBalances)}
-        </View>
-        <View style={[styles.row, styles.lastRow]}>
-          <Text style={styles.label}>Наличие просрочек</Text>
-          <Text style={[styles.value, data.carArrears === 'Нет' ? styles.statusPositive : styles.statusNegative]}>
-            {data.carArrears}
-          </Text>
-        </View>
-      </View>
 
-      {/* Дашборд Ипотека */}
-      <Text style={styles.sectionTitle}>Ипотека и недвижимость</Text>
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <Text style={styles.label}>Ипотека</Text>
-          <Text style={styles.value}>{data.hasMortgage}</Text>
+        {/* Долги (ID 10, 11) */}
+        <Text style={styles.sectionTitle}>Задолженности</Text>
+        <View style={styles.card}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Долги ФССП</Text>
+            <Text
+              style={[
+                styles.value,
+                getAnswer("10") === "Нет"
+                  ? styles.statusPositive
+                  : styles.statusNegative,
+              ]}
+            >
+              {getAnswer("10")}{" "}
+              {getAnswer("10") === "Да" ? `(${getDetails("10")})` : ""}
+            </Text>
+          </View>
+          <View style={[styles.row, styles.lastRow]}>
+            <Text style={styles.label}>Налоги</Text>
+            <Text
+              style={[
+                styles.value,
+                getAnswer("11") === "Нет"
+                  ? styles.statusPositive
+                  : styles.statusNegative,
+              ]}
+            >
+              {getAnswer("11")}{" "}
+              {getAnswer("11") === "Да" ? `(${getDetails("11")})` : ""}
+            </Text>
+          </View>
         </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Остаток</Text>
-          <Text style={styles.value}>{data.mortgageBalance}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Доп. недвижимость</Text>
-          <Text style={styles.value}>{data.additionalProperty}</Text>
-        </View>
-        <View style={[styles.row, styles.lastRow]}>
-          <Text style={styles.label}>Наличие просрочек</Text>
-          <Text style={[styles.value, data.mortgageArrears === 'Нет' ? styles.statusPositive : styles.statusNegative]}>
-            {data.mortgageArrears}
-          </Text>
-        </View>
-      </View>
+      </ScrollView>
 
-      {/* Дашборд ФССП */}
-      <Text style={styles.sectionTitle}>ФССП</Text>
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <Text style={styles.label}>Сумма по ФССП</Text>
-          <Text style={styles.value}>{data.fsspSum}</Text>
-        </View>
-        <View style={[styles.row, styles.lastRow]}>
-          <Text style={styles.label}>Долг по ФССП</Text>
-          <Text style={[styles.value, data.fsspDebt === 'Нет' ? styles.statusPositive : styles.statusNegative]}>
-            {data.fsspDebt}
-          </Text>
-        </View>
-      </View>
-
-      {/* Дашборд Налоги */}
-      <Text style={styles.sectionTitle}>Налоги</Text>
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <Text style={styles.label}>Сумма налогов</Text>
-          <Text style={styles.value}>{data.taxSum}</Text>
-        </View>
-        <View style={[styles.row, styles.lastRow]}>
-          <Text style={styles.label}>Налоговый долг</Text>
-          <Text style={[styles.value, data.taxDebt === 'Нет' ? styles.statusPositive : styles.statusNegative]}>
-            {data.taxDebt}
-          </Text>
-        </View>
-      </View>
-
-      <View style={{ height: 40 }} />
-    </ScrollView>
+      {/* Modal динамики */}
+      <Modal visible={showHistory} transparent animationType="fade">
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowHistory(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text
+              style={[styles.sectionTitle, { marginTop: 0, marginLeft: 0 }]}
+            >
+              Динамика рейтинга
+            </Text>
+            <View style={{ marginVertical: 10 }}>
+              <View style={styles.row}>
+                <Text style={styles.label}>Январь</Text>
+                <Text style={styles.scoreValue}>450</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Декабрь</Text>
+                <Text style={styles.scoreValue}>430</Text>
+              </View>
+              <View style={[styles.row, styles.lastRow]}>
+                <Text style={styles.label}>Ноябрь</Text>
+                <Text style={styles.scoreValue}>415</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.mainButton}
+              onPress={() => setShowHistory(false)}
+            >
+              <Text style={styles.mainButtonText}>Закрыть</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+    </View>
   );
 };
 
