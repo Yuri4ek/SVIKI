@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   ScrollView,
   useColorScheme,
   TouchableOpacity,
-  ActivityIndicator,
   TextInput,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { getUserRole, UserRole } from "@/utils/storage"; 
+import { useUserStore } from "@/store";
+
 import { createProfileStyles } from "@/styles";
 
 const ProfilePage = () => {
@@ -17,8 +17,8 @@ const ProfilePage = () => {
   const theme = useColorScheme() ?? "light";
   const styles = createProfileStyles(theme);
 
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const userRole = useUserStore((state) => state.role);
+  const clearRole = useUserStore((state) => state.clearRole);
 
   // Данные профиля
   const [email, setEmail] = useState("user@example.com");
@@ -26,35 +26,14 @@ const ProfilePage = () => {
   const [bik, setBik] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const role = await getUserRole();
-        setUserRole(role);
-      } catch (error) {
-        console.error("Ошибка при загрузке роли:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadProfile();
-  }, []);
-
   const handleLogout = () => {
+    clearRole();
     router.replace('/authorizationRegistration');
   };
 
   const handleConfirmVerification = () => {
     router.replace("/verification");
   };
-
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { justifyContent: "center" }]}>
-        <ActivityIndicator size="large" color={styles.primaryColor.color} />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>

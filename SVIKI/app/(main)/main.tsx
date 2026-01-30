@@ -8,9 +8,9 @@ import {
   TouchableOpacity,
   Modal,
   Pressable,
-  ActivityIndicator, // Добавим индикатор загрузки для плавности
+  ActivityIndicator,
 } from "react-native";
-import { saveUserRole, getUserRole, UserRole } from "@/utils";
+import { useUserStore } from "@/store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createMainStyles } from "@/styles";
 
@@ -18,31 +18,26 @@ const MainPage = () => {
   const theme = useColorScheme() ?? "light";
   const styles = createMainStyles(theme);
 
+  const userRole = useUserStore((state) => state.role);
+
   const [quizData, setQuizData] = useState<any>(null);
   const [showHistory, setShowHistory] = useState(false);
   
-  // Новые состояния для роли и процесса загрузки
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadAppData = async () => {
+    const loadQuizData = async () => {
       try {
-        // Загружаем роль и данные квиза параллельно для скорости
-        const [role, jsonValue] = await Promise.all([
-          getUserRole(),
-          AsyncStorage.getItem("user_quiz_data"),
-        ]);
-
-        setUserRole(role);
+        // Загрузка данных из анкеты
+        const jsonValue = await AsyncStorage.getItem("user_quiz_data");
         if (jsonValue != null) setQuizData(JSON.parse(jsonValue));
       } catch (e) {
-        console.error("Ошибка при инициализации данных:", e);
+        console.error("Ошибка:", e);
       } finally {
         setIsLoading(false);
       }
     };
-    loadAppData();
+    loadQuizData();
   }, []);
 
   // Хелперы для получения данных
@@ -50,20 +45,14 @@ const MainPage = () => {
   const getDetails = (id: string) => quizData?.[id]?.details || "";
 
   // 1. Состояние загрузки: пока проверяем роль, не показываем ничего или крутилку
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </View>
-    );
-  }
-
-  // 2. Условие "Пустоты": если роль не "Клиент", возвращаем пустой контейнер
   if (userRole !== "Клиент") {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle={theme === "light" ? "dark-content" : "light-content"} />
-        {/* Здесь пустота, как вы и просили. Можно добавить пустой Text для структуры, если нужно */}
+         <StatusBar barStyle={theme === "light" ? "dark-content" : "light-content"} />
+         {/* Для Агентов и Юристов показываем заглушку или другой контент */}
+         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ color: styles.header.color }}>Кабинет {userRole}</Text>
+         </View>
       </View>
     );
   }
