@@ -16,17 +16,34 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Настройки</Text>
-        
-        <View style={styles.infoBox}>
-          <Text style={styles.text}>
-            <Text style={styles.label}>Пользователь: </Text>SVIKI User
-          </Text>
-          <Text style={styles.text}>
-            <Text style={styles.label}>Версия: </Text>1.0.0 (M3 Design)
+        {/* Заголовок и расшифровка SVIKI */}
+        <View style={styles.headerSection}>
+          <Text style={styles.appTitle}>SVIKI</Text>
+          <Text style={styles.appDescription}>
+            Система Восстановления И Контроля Кредитной Истории
           </Text>
         </View>
+        
+        {/* Информационный блок */}
+        <View style={styles.section}>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Пользователь</Text>
+            <Text style={styles.value}>SVIKI User</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Версия</Text>
+            <Text style={styles.value}>1.0.0 (M3 Design)</Text>
+          </View>
+        </View>
 
+        {/* Секция разработчиков */}
+        <View style={styles.developerSection}>
+          <Text style={styles.developerLabel}>Разработчики</Text>
+          <Text style={styles.developerText}>@antonov99dm</Text>
+          <Text style={styles.developerText}>@genby9</Text>
+        </View>
+
+        {/* Кнопка выхода */}
         <TouchableOpacity 
           style={styles.logoutButton} 
           onPress={handleLogout}

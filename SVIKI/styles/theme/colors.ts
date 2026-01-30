@@ -46,6 +46,7 @@ export const Colors = {
     // Outline: Границы и разделители
     outline: '#79747E',
     outlineVariant: '#CAC4D0',
+    shadow: '#000',
 
     // Дополнительные (из твоего старого файла)
     tint: primaryLight,

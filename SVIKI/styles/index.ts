@@ -1,3 +1,4 @@
+export { createLayoutStyles } from "./_layout.styles";
 export { createMainStyles } from "./main.styles";
 export { createChatStyles } from "./chat.styles";
 export { createUsersStyles } from "./users.styles";
