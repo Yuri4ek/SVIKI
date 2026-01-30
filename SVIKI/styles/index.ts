@@ -1,6 +1,7 @@
 export { createMainStyles } from "./main.styles";
 export { createChatStyles } from "./chat.styles";
 export { createUsersStyles } from "./users.styles";
+export { createProfileStyles } from "./profile.styles";
 export { createSettingsStyles } from "./settings.styles";
 export { createQuizStyles } from "./quiz.styles";
 export { createAuthStyles } from "./auth.styles";
