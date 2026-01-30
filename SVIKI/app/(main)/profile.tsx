@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   TextInput,
 } from "react-native";
-import { useRouter } from "expo-router"; // Используем useRouter как в настройках
+import { useRouter } from "expo-router";
 import { getUserRole, UserRole } from "@/utils/storage"; 
 import { createProfileStyles } from "@/styles";
 
@@ -20,7 +20,7 @@ const ProfilePage = () => {
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Состояния для ввода данных
+  // Данные профиля
   const [email, setEmail] = useState("user@example.com");
   const [phone, setPhone] = useState("+7");
   const [bik, setBik] = useState("");
@@ -28,19 +28,22 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const role = await getUserRole();
-      setUserRole(role);
-      setIsLoading(false);
+      try {
+        const role = await getUserRole();
+        setUserRole(role);
+      } catch (error) {
+        console.error("Ошибка при загрузке роли:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadProfile();
   }, []);
 
-  // Логика выхода как в settings.tsx
   const handleLogout = () => {
     router.replace('/authorizationRegistration');
   };
 
-  // Переход на верификацию через replace
   const handleConfirmVerification = () => {
     router.replace("/verification");
   };
@@ -61,13 +64,13 @@ const ProfilePage = () => {
         <View style={styles.profileBadge}>
           <View>
             <Text style={styles.userName}>Иван Иванов Иванович</Text>
-            <Text style={styles.userRoleText}>{userRole}</Text>
+            {/* Отображаем роль, полученную из хранилища */}
+            <Text style={styles.userRoleText}>{userRole || "Роль не определена"}</Text>
           </View>
         </View>
 
         <Text style={styles.sectionTitle}>Безопасность и данные</Text>
         <View style={styles.card}>
-          {/* Поле для почты */}
           <View style={styles.row}>
             <View style={styles.rowLeft}>
               <Text style={styles.label}>Электронная почта</Text>
@@ -81,7 +84,6 @@ const ProfilePage = () => {
             </View>
           </View>
 
-          {/* Поле для телефона */}
           <View style={styles.row}>
             <View style={styles.rowLeft}>
               <Text style={styles.label}>Телефон</Text>
@@ -95,7 +97,6 @@ const ProfilePage = () => {
             </View>
           </View>
 
-          {/* Кнопка подтверждения */}
           <TouchableOpacity 
             style={[styles.row, styles.lastRow]} 
             onPress={handleConfirmVerification}
@@ -104,7 +105,6 @@ const ProfilePage = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Кнопка Госуслуг (текстовая) */}
         <View style={styles.card}>
           <TouchableOpacity 
             style={[styles.row, styles.lastRow]} 
@@ -115,7 +115,11 @@ const ProfilePage = () => {
           </TouchableOpacity>
         </View>
 
-        {(userRole === "Агент" || userRole === "Юрист") && (
+        {/* ЛОГИКА РОЛЕЙ: 
+            Если роль "Клиент", блок ниже не отобразится.
+            Если роль "Агент" или "Юрист", блок будет виден.
+        */}
+        {userRole !== "Клиент" && (
           <>
             <Text style={styles.sectionTitle}>Профессиональные данные</Text>
             <View style={styles.card}>

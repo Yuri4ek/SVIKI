@@ -48,6 +48,9 @@ export default function AuthScreen() {
   const roles: UserRole[] = ["Клиент", "Агент", "Юрист"];
   const orgTypes: OrgType[] = ["ИП", "ООО", "Самозанятый"];
 
+  // Выставляю стоковое значение
+  saveUserRole("Клиент");
+
   const handleRegister = () => {
     if (!role) {
       Alert.alert("Ошибка", "Выберите роль");
