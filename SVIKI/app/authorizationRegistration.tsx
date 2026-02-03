@@ -50,19 +50,19 @@ export default function AuthScreen() {
   const roles: UserRole[] = ["Клиент", "Агент", "Юрист"];
   const orgTypes: OrgType[] = ["ИП", "ООО", "Самозанятый"];
 
+  const login = useUserStore((state) => state.login);
+
   const handleRegister = () => {
     if (!role) {
       Alert.alert("Ошибка", "Выберите роль");
       return;
     }
-
     if (role !== "Клиент") {
       if (!orgType || !inn || !bik || !bankAccount) {
         Alert.alert("Ошибка", "Заполните данные организации и реквизиты");
         return;
       }
     }
-
     if (!identifier || !password || !confirmPassword) {
       Alert.alert("Ошибка", "Заполните все поля");
       return;
@@ -76,7 +76,7 @@ export default function AuthScreen() {
       return;
     }
 
-    setStoreRole(role);
+    login(role);
 
     const verificationType = identifier.includes("@") ? "email" : "phone";
     router.push({
@@ -87,7 +87,7 @@ export default function AuthScreen() {
 
   const handleLogin = () => {
     if (identifier === "1234" && password === "1234") {
-      setStoreRole("Клиент");
+      login(role);
       router.replace("/main");
     } else {
       Alert.alert("Ошибка", "Неверные данные");

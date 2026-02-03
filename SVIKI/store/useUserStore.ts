@@ -1,27 +1,32 @@
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export type UserRole = 'Клиент' | 'Агент' | 'Юрист';
+export type UserRole = "Клиент" | "Агент" | "Юрист";
 
 interface UserState {
   role: UserRole;
+  isLoggedIn: boolean;
   setRole: (role: UserRole) => void;
-  clearRole: () => void;
+  login: (role: UserRole) => void;
+  logout: () => void;
 }
 
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
-      role: 'Клиент', // Начальное состояние
+      role: "Клиент",
+      isLoggedIn: false,
 
       setRole: (role) => set({ role }),
-      
-      clearRole: () => set({ role: 'Клиент' }),
+
+      login: (role) => set({ role, isLoggedIn: true }),
+
+      logout: () => set({ isLoggedIn: false, role: "Клиент" }),
     }),
     {
-      name: 'sviki-user-storage', // уникальное имя для ключа в AsyncStorage
-      storage: createJSONStorage(() => AsyncStorage), // связываем с AsyncStorage
-    }
-  )
+      name: "sviki-user-storage",
+      storage: createJSONStorage(() => AsyncStorage),
+    },
+  ),
 );

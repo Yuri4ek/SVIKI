@@ -1,4 +1,5 @@
 import React from 'react';
+import { useUserStore } from '@/store';
 import { View, Text, TouchableOpacity, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -6,10 +7,14 @@ import { createSettingsStyles } from '@/styles';
 
 export default function SettingsScreen() {
   const router = useRouter();
+
   const theme = useColorScheme() ?? 'light';
   const styles = createSettingsStyles(theme);
 
+  const logout = useUserStore((state) => state.logout);
+
   const handleLogout = () => {
+    logout();
     router.replace('/authorizationRegistration');
   };
 

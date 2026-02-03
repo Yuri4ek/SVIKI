@@ -18,17 +18,17 @@ const ProfilePage = () => {
   const styles = createProfileStyles(theme);
 
   const userRole = useUserStore((state) => state.role);
-  const clearRole = useUserStore((state) => state.clearRole);
 
-  // Данные профиля
   const [email, setEmail] = useState("user@example.com");
   const [phone, setPhone] = useState("+7");
   const [bik, setBik] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
 
+  const logout = useUserStore((state) => state.logout);
+
   const handleLogout = () => {
-    clearRole();
-    router.replace('/authorizationRegistration');
+    logout();
+    router.replace("/authorizationRegistration");
   };
 
   const handleConfirmVerification = () => {
@@ -39,12 +39,14 @@ const ProfilePage = () => {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.header}>Профиль</Text>
-        
+
         <View style={styles.profileBadge}>
           <View>
             <Text style={styles.userName}>Иван Иванов Иванович</Text>
             {/* Отображаем роль, полученную из хранилища */}
-            <Text style={styles.userRoleText}>{userRole || "Роль не определена"}</Text>
+            <Text style={styles.userRoleText}>
+              {userRole || "Роль не определена"}
+            </Text>
           </View>
         </View>
 
@@ -76,8 +78,8 @@ const ProfilePage = () => {
             </View>
           </View>
 
-          <TouchableOpacity 
-            style={[styles.row, styles.lastRow]} 
+          <TouchableOpacity
+            style={[styles.row, styles.lastRow]}
             onPress={handleConfirmVerification}
           >
             <Text style={styles.linkText}>Подтвердить данные</Text>
@@ -85,8 +87,8 @@ const ProfilePage = () => {
         </View>
 
         <View style={styles.card}>
-          <TouchableOpacity 
-            style={[styles.row, styles.lastRow]} 
+          <TouchableOpacity
+            style={[styles.row, styles.lastRow]}
             onPress={() => console.log("Госуслуги")}
           >
             <Text style={styles.label}>Верификация через Госуслуги</Text>
@@ -131,14 +133,13 @@ const ProfilePage = () => {
           </>
         )}
 
-        <TouchableOpacity 
-          style={styles.logoutButton} 
+        <TouchableOpacity
+          style={styles.logoutButton}
           onPress={handleLogout}
           activeOpacity={0.7}
         >
           <Text style={styles.logoutButtonText}>Выйти из аккаунта</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </View>
   );
