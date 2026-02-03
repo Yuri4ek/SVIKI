@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-export type UserRole = "Клиент" | "Агент" | "Юрист";
+import { UserRole } from '@/store';
 
 const ROLE_KEY = 'sviki_user_role';
 

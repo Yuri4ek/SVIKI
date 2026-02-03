@@ -1,1 +1,1 @@
-export { getUserRole, saveUserRole, UserRole } from "./storage";
+export { getUserRole, saveUserRole } from "./storage";

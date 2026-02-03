@@ -52,6 +52,20 @@ export const QUIZ_DATA: QuestionType[] = [
           },
         ],
       },
+      {
+        id: "1_5",
+        triggerValue: "Да",
+        question: "Есть автокредит?",
+        options: ["Да", "Нет"],
+        subQuestions: [
+          {
+            id: "1_5_1",
+            triggerValue: "Да",
+            question: "Остаток по автокредиту:",
+            options: ["до 1 млн", "свыше 1 млн"],
+          },
+        ],
+      },
     ],
   },
   {
@@ -75,29 +89,16 @@ export const QUIZ_DATA: QuestionType[] = [
   },
   {
     id: "4",
-    question: "Есть автокредит?",
-    options: ["Да", "Нет"],
-    subQuestions: [
-      {
-        id: "4_1",
-        triggerValue: "Да",
-        question: "Остаток по автокредиту:",
-        options: ["до 1 млн", "свыше 1 млн"],
-      },
-    ],
-  },
-  {
-    id: "5",
     question: "Официально трудоустроены?",
     options: ["Да", "Нет"],
   },
   {
-    id: "6",
+    id: "5",
     question: "Долги ФССП (судебные приставы)?",
     options: ["Да", "Нет"],
     subQuestions: [
       {
-        id: "6_1",
+        id: "5_1",
         triggerValue: "Да",
         question: "Какая сумма долга ФССП?",
         options: [
@@ -113,12 +114,12 @@ export const QUIZ_DATA: QuestionType[] = [
     ],
   },
   {
-    id: "7",
+    id: "6",
     question: "Долги по налогам?",
     options: ["Да", "Нет"],
     subQuestions: [
       {
-        id: "7_1",
+        id: "6_1",
         triggerValue: "Да",
         question: "Какая сумма долга по налогам?",
         options: [
