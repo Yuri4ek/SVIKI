@@ -1,0 +1,1 @@
+export { QUIZ_DATA, QuestionType } from "./quizData";

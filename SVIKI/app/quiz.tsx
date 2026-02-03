@@ -1,51 +1,68 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, TouchableOpacity, useColorScheme } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
-import { QUIZ_DATA, QuestionType } from "../constants/quizData";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { QUIZ_DATA, QuestionType } from "@/constants";
 import { createQuizStyles } from "@/styles";
+
+const getVisibleQuestions = (
+  questions: QuestionType[],
+  answers: Record<string, string>,
+): QuestionType[] => {
+  let visible: QuestionType[] = [];
+
+  questions.forEach((q) => {
+    visible.push(q);
+    const userAnswer = answers[q.id];
+
+    if (q.subQuestions && userAnswer) {
+      const activeSubQuestions = q.subQuestions.filter(
+        (sub: QuestionType) =>
+          !sub.triggerValue || sub.triggerValue === userAnswer,
+      );
+
+      if (activeSubQuestions.length > 0) {
+        visible = [
+          ...visible,
+          ...getVisibleQuestions(activeSubQuestions, answers),
+        ];
+      }
+    }
+  });
+
+  return visible;
+};
 
 export default function QuizScreen() {
   const router = useRouter();
   const theme = useColorScheme() ?? "light";
   const styles = createQuizStyles(theme);
-
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
+  const visibleQuestions = useMemo(() => {
+    return getVisibleQuestions(QUIZ_DATA, answers);
+  }, [answers]);
+
   const handleSelect = (questionId: string, value: string) => {
-    setAnswers((prev) => {
-      const newAnswers = { ...prev, [questionId]: value };
-      // Если это основной вопрос и ответ изменился на "Нет",
-      // удаляем ответ на подвопрос для чистоты данных
-      if (
-        !questionId.includes("_sub") &&
-        value !==
-          QUIZ_DATA.find((q) => q.id === questionId)?.subQuestion?.triggerValue
-      ) {
-        delete newAnswers[`${questionId}_sub`];
-      }
-      return newAnswers;
-    });
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+  };
+
+  const isQuizComplete = () => {
+    return visibleQuestions.every((q) => !!answers[q.id]);
   };
 
   const collectAndLogResults = async () => {
-    const finalData = QUIZ_DATA.reduce(
-      (acc, q) => {
-        const mainAnswer = answers[q.id];
-        const subAnswer = answers[`${q.id}_sub`];
-
-        acc[q.id] = {
-          answer: mainAnswer || "Нет",
-          details: subAnswer || null,
-        };
-        return acc;
-      },
-      {} as Record<string, any>,
-    );
-
     try {
+      const finalData = visibleQuestions.reduce(
+        (acc, q) => {
+          acc[q.id] = answers[q.id];
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+
       await AsyncStorage.setItem("user_quiz_data", JSON.stringify(finalData));
       router.replace("/main");
     } catch (e) {
@@ -53,80 +70,63 @@ export default function QuizScreen() {
     }
   };
 
-  const isQuizComplete = () => {
-    return QUIZ_DATA.every((q) => {
-      const hasMainAnswer = !!answers[q.id];
-      const needsSubAnswer =
-        q.subQuestion && answers[q.id] === q.subQuestion.triggerValue;
-      if (needsSubAnswer) {
-        return !!answers[`${q.id}_sub`];
-      }
-      return hasMainAnswer;
-    });
-  };
+  /**
+   * Рендер одного варианта ответа (кнопки)
+   */
+  const renderOption = (
+    option: string,
+    questionId: string,
+    selectedValue: string,
+  ) => (
+    <TouchableOpacity
+      key={option}
+      style={[
+        styles.optionButton,
+        selectedValue === option && styles.selectedOption,
+        { marginBottom: 8 }, // Добавляем отступ между кнопками
+      ]}
+      onPress={() => handleSelect(questionId, option)}
+    >
+      <Text style={styles.optionText}>{option}</Text>
+    </TouchableOpacity>
+  );
 
   const renderQuestion = ({ item }: { item: QuestionType }) => {
     const selectedValue = answers[item.id];
-    const showSubQuestion =
-      item.subQuestion && selectedValue === item.subQuestion.triggerValue;
+    const isChild = !!item.triggerValue;
 
     return (
-      <View>
-        {/* Основной вопрос */}
-        <View style={styles.card}>
-          <Text style={styles.questionText}>{item.question}</Text>
-          <View style={styles.optionsContainer}>
-            {item.options.map((opt) => (
-              <TouchableOpacity
-                key={opt}
-                style={[
-                  styles.optionButton,
-                  selectedValue === opt && styles.selectedOption,
-                ]}
-                onPress={() => handleSelect(item.id, opt)}
-              >
-                <Text style={styles.optionText}>{opt}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+      <View style={[styles.card, isChild && { marginLeft: 16, opacity: 0.9 }]}>
+        <Text style={styles.questionText}>{item.question}</Text>
 
-        {/* Подвопрос - теперь выглядит идентично основной карточке */}
-        {showSubQuestion && (
-          <View style={styles.card}>
-            <Text style={styles.questionText}>
-              {item.subQuestion?.question}
-            </Text>
-            <View style={styles.optionsContainer}>
-              {item.subQuestion?.options.map((subOpt) => (
-                <TouchableOpacity
-                  key={subOpt}
-                  style={[
-                    styles.optionButton, // Используем тот же стиль, что и у основных кнопок
-                    answers[`${item.id}_sub`] === subOpt &&
-                      styles.selectedOption,
-                  ]}
-                  onPress={() => handleSelect(`${item.id}_sub`, subOpt)}
-                >
-                  <Text style={styles.optionText}>{subOpt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
+        {/* Вместо .map() используем FlashList для вариантов */}
+        <View style={{ minHeight: 50 }}>
+          <FlashList
+            data={item.options}
+            renderItem={({ item: opt }) =>
+              renderOption(opt, item.id, selectedValue)
+            }
+            estimatedItemSize={50}
+            keyExtractor={(opt) => opt}
+            scrollEnabled={false} // Отключаем внутренний скролл, чтобы не конфликтовать с основным
+          />
+        </View>
       </View>
     );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlashList
-        data={QUIZ_DATA}
-        renderItem={renderQuestion}
-        estimatedItemSize={250}
-        contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
-        keyExtractor={(item) => item.id}
-      />
+      <View style={{ flex: 1 }}>
+        <FlashList<QuestionType>
+          data={visibleQuestions}
+          renderItem={renderQuestion}
+          estimatedItemSize={250}
+          contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+          keyExtractor={(item: QuestionType) => item.id}
+          extraData={answers}
+        />
+      </View>
 
       <View style={styles.footer}>
         <TouchableOpacity
