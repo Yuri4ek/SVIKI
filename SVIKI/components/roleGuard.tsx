@@ -7,9 +7,6 @@ interface Props {
   agent?: ReactNode;
   lawyer?: ReactNode;
   admin?: ReactNode;
-  
-  // Если true, Агент и Юрист будут использовать agent компонент (если lawyer не передан явно) --- на данный момент не испоьзуется
-  unifyAgentLawyer?: boolean; 
 }
 
 export const RoleGuard = ({ 
@@ -17,7 +14,6 @@ export const RoleGuard = ({
   agent, 
   lawyer, 
   admin,
-  unifyAgentLawyer = false 
 }: Props) => {
   const role = useUserStore((state) => state.role);
 

@@ -26,8 +26,6 @@ type OrgType = "ИП" | "ООО" | "Самозанятый" | null;
 export default function AuthScreen() {
   const router = useRouter();
 
-  const setStoreRole = useUserStore((state) => state.setRole);
-
   const [role, setRole] = useState<UserRole>("Клиент");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -78,7 +76,12 @@ export default function AuthScreen() {
     }
 
     login(role);
-    router.replace(ROUTES.QUIZ);
+    if (role === "Клиент") {
+      router.replace(ROUTES.QUIZ);
+    }
+    else {
+      router.replace(ROUTES.MAIN);
+    }
   };
 
   const handleLogin = () => {
