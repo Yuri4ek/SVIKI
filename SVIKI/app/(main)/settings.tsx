@@ -1,14 +1,10 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, useColorScheme } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useUserStore } from "@/store";
 import { createSettingsStyles } from "@/styles";
 import { RoleGuard } from "@/components";
-
-// ==========================================
-// 1. STATIC DATA
-// ==========================================
 
 const APP_INFO = {
   title: "SVIKI",
@@ -103,7 +99,7 @@ const SettingsView = ({ mode, styles, onLogout }: SettingsContentProps) => {
 const SettingsScreen = () => {
   const router = useRouter();
   const theme = useColorScheme() ?? "light";
-  const styles = createSettingsStyles(theme);
+  const styles = useMemo(() => createSettingsStyles(theme), [theme]);
   const logout = useUserStore((state) => state.logout);
 
   const handleLogout = () => {

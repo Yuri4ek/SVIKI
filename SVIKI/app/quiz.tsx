@@ -38,7 +38,7 @@ const getVisibleQuestions = (
 export default function QuizScreen() {
   const router = useRouter();
   const theme = useColorScheme() ?? "light";
-  const styles = createQuizStyles(theme);
+  const styles = useMemo(() => createQuizStyles(theme), [theme]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   const visibleQuestions = useMemo(() => {

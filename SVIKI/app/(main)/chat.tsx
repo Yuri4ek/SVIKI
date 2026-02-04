@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -81,7 +81,6 @@ const FullChatView = ({ styles }: { styles: any }) => {
       <FlashList
         data={data}
         estimatedItemSize={70}
-        // ИСПРАВЛЕНИЕ: Явно указываем тип { item: any }
         renderItem={({ item }: { item: any }) => (
           <ContactItem item={item} onPress={setSelectedUser} styles={styles} />
         )}
@@ -160,7 +159,6 @@ const ClientChatView = ({ styles }: { styles: any }) => {
             </Text>
           </View>
         }
-        // ИСПРАВЛЕНИЕ: Явно указываем тип { item: any }
         renderItem={({ item }: { item: any }) => (
           <ContactItem item={item} onPress={setSelectedUser} styles={styles} />
         )}
@@ -180,7 +178,7 @@ const ClientChatView = ({ styles }: { styles: any }) => {
 
 const ChatScreen = () => {
   const theme = useColorScheme() ?? "light";
-  const styles = createChatStyles(theme);
+  const styles = useMemo(() => createChatStyles(theme), [theme]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

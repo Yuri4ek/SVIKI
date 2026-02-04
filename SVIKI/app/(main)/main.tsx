@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, useColorScheme } from "react-native";
 import { createMainStyles } from "@/styles";
 import { RoleGuard } from "@/components";
@@ -7,7 +7,7 @@ import { ClientDashboard } from "@/components/dashboards";
 
 const MainPage = () => {
   const theme = useColorScheme() ?? "light";
-  const styles = createMainStyles(theme);
+  const styles = useMemo(() => createMainStyles(theme), [theme]);
 
   return (
     <View style={styles.container}>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useRouter } from "expo-router";
 import {
   TextInput,
@@ -45,7 +45,7 @@ export default function AuthScreen() {
 
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
-  const styles = createAuthStyles(theme);
+  const styles = useMemo(() => createAuthStyles(theme), [theme]);
 
   const roles: UserRole[] = ["Клиент", "Агент", "Юрист"];
   const orgTypes: OrgType[] = ["ИП", "ООО", "Самозанятый"];
@@ -77,12 +77,7 @@ export default function AuthScreen() {
     }
 
     login(role);
-
-    const verificationType = identifier.includes("@") ? "email" : "phone";
-    router.push({
-      pathname: "/verification",
-      params: { type: verificationType, role: role },
-    });
+    router.replace("/quiz");
   };
 
   const handleLogin = () => {

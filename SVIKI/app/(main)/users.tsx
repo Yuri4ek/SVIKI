@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import {
   View,
   Text,
@@ -209,7 +209,7 @@ const ClientManagersView = ({ styles }: { styles: any }) => {
 
 const UsersScreen = () => {
   const theme = useColorScheme() ?? "light";
-  const styles = createUsersStyles(theme);
+  const styles = useMemo(() => createUsersStyles(theme), [theme]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

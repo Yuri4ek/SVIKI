@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, useColorScheme } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,15 +7,13 @@ import { createLayoutStyles } from '@/styles';
 
 export default function TabsLayout() {
   const theme = useColorScheme() ?? 'light';
-  const styles = createLayoutStyles(theme);
+  const styles = useMemo(() => createLayoutStyles(theme), [theme]);
   
   const activeColor = Colors[theme].primary; 
   const inactiveColor = Colors[theme].onSurfaceVariant;
 
   return (
     <Tabs
-      // Задаем общий фон для всех страниц
-      sceneContainerStyle={styles.sceneContainer as any}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: activeColor,

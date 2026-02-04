@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Modal, Pressable, useColorScheme } from 'react-native';
 import { createMainStyles } from '@/styles';
 
@@ -8,7 +8,7 @@ interface ClientDashboardProps {
 
 export const ClientDashboard = ({ quizData }: ClientDashboardProps) => {
   const theme = useColorScheme() ?? 'light';
-  const styles = createMainStyles(theme);
+  const styles = useMemo(() => createMainStyles(theme), [theme]);
   const [showHistory, setShowHistory] = useState(false);
 
   const getAnswer = (id: string) => quizData?.[id]?.answer || "Нет данных";

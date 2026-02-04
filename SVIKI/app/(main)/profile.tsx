@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -29,8 +29,7 @@ interface CommonLayoutProps {
   userRole: string;
   data: { email: string; phone: string };
   setters: { setEmail: (v: string) => void; setPhone: (v: string) => void };
-  onVerify: () => void;
-  children?: React.ReactNode; // Сюда вставляем уникальный контент ролей
+  children?: React.ReactNode; 
   onLogout: () => void;
 }
 
@@ -40,7 +39,6 @@ const CommonProfileLayout = ({
   userRole,
   data,
   setters,
-  onVerify,
   children,
   onLogout,
 }: CommonLayoutProps) => {
@@ -91,7 +89,6 @@ const CommonProfileLayout = ({
 
         <TouchableOpacity
           style={[styles.row, styles.lastRow]}
-          onPress={onVerify}
         >
           <Text style={styles.linkText}>Подтвердить данные</Text>
         </TouchableOpacity>
@@ -123,15 +120,12 @@ const ClientProfile = ({ styles, logout, userRole }: any) => {
   const [email, setEmail] = useState(MOCK_PROFILE_DATA.email);
   const [phone, setPhone] = useState(MOCK_PROFILE_DATA.phone);
 
-  const handleVerify = () => router.push("/verification");
-
   return (
     <CommonProfileLayout
       styles={styles}
       userRole={userRole}
       data={{ email, phone }}
       setters={{ setEmail, setPhone }}
-      onVerify={handleVerify}
       onLogout={logout}
     />
   );
@@ -146,8 +140,6 @@ const WorkerProfile = ({ styles, logout, roleName, userRole }: any) => {
   const [bik, setBik] = useState(MOCK_PROFILE_DATA.bik);
   const [account, setAccount] = useState(MOCK_PROFILE_DATA.account);
 
-  const handleVerify = () => router.push("/verification");
-
   return (
     <CommonProfileLayout
       styles={styles}
@@ -155,7 +147,6 @@ const WorkerProfile = ({ styles, logout, roleName, userRole }: any) => {
       userRole={userRole}
       data={{ email, phone }}
       setters={{ setEmail, setPhone }}
-      onVerify={handleVerify}
       onLogout={logout}
     >
       {/* Вставляем уникальный блок через children */}
@@ -194,7 +185,7 @@ const WorkerProfile = ({ styles, logout, roleName, userRole }: any) => {
 export default function ProfilePage() {
   const router = useRouter();
   const theme = useColorScheme() ?? "light";
-  const styles = createProfileStyles(theme);
+  const styles = useMemo(() => createProfileStyles(theme), [theme]);
 
   const logout = useUserStore((state) => state.logout);
   const userRole = useUserStore((state) => state.role);
