@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { QUIZ_DATA, QuestionType } from "@/constants";
+import { QUIZ_DATA, QuestionType, ROUTES } from "@/constants";
 import { createQuizStyles } from "@/styles";
 
 const getVisibleQuestions = (
@@ -64,7 +64,7 @@ export default function QuizScreen() {
       );
 
       await AsyncStorage.setItem("user_quiz_data", JSON.stringify(finalData));
-      router.replace("/main");
+      router.replace(ROUTES.MAIN);
     } catch (e) {
       console.error("Ошибка сохранения данных", e);
     }

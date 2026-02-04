@@ -8,6 +8,7 @@ import {
   useColorScheme,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { ROUTES } from "@/constants";
 import { useUserStore } from "@/store";
 import { createProfileStyles } from "@/styles";
 import { RoleGuard } from "@/components";
@@ -192,7 +193,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     logout();
-    router.replace("/authorizationRegistration");
+    router.replace(ROUTES.AUTH);
   };
 
   return (

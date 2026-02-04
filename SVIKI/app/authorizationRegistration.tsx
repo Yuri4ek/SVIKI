@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useRouter } from "expo-router";
+import { ROUTES } from "@/constants";
 import {
   TextInput,
   Alert,
@@ -77,13 +78,13 @@ export default function AuthScreen() {
     }
 
     login(role);
-    router.replace("/quiz");
+    router.replace(ROUTES.QUIZ);
   };
 
   const handleLogin = () => {
     if (identifier === "1234" && password === "1234") {
       login(role);
-      router.replace("/main");
+      router.replace(ROUTES.MAIN);
     } else {
       Alert.alert("Ошибка", "Неверные данные");
     }

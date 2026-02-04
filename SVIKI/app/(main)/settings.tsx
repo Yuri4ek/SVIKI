@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity, useColorScheme } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { ROUTES } from "@/constants";
 import { useUserStore } from "@/store";
 import { createSettingsStyles } from "@/styles";
 import { RoleGuard } from "@/components";
@@ -104,7 +105,7 @@ const SettingsScreen = () => {
 
   const handleLogout = () => {
     logout();
-    router.replace("/authorizationRegistration");
+    router.replace(ROUTES.AUTH);
   };
 
   return (
