@@ -15,13 +15,12 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 
 import { useUserStore, UserRole } from "@/store";
+import { authService } from "@/api";
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/styles/theme";
 import { createAuthStyles } from "@/styles";
-
-type OrgType = "ИП" | "ООО" | "Самозанятый" | null;
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -36,31 +35,18 @@ export default function AuthScreen() {
   const [isRegisterMode, setIsRegisterMode] = useState(true);
   const [isRolePickerOpen, setIsRolePickerOpen] = useState(false);
 
-  const [orgType, setOrgType] = useState<OrgType>(null);
-  const [inn, setInn] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [bik, setBik] = useState("");
-  const [bankAccount, setBankAccount] = useState("");
-
   const colorScheme = useColorScheme() ?? "light";
   const theme = Colors[colorScheme];
   const styles = useMemo(() => createAuthStyles(theme), [theme]);
 
   const roles: UserRole[] = ["Клиент", "Агент", "Юрист"];
-  const orgTypes: OrgType[] = ["ИП", "ООО", "Самозанятый"];
 
   const login = useUserStore((state) => state.login);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!role) {
       Alert.alert("Ошибка", "Выберите роль");
       return;
-    }
-    if (role !== "Клиент") {
-      if (!orgType || !inn || !bik || !bankAccount) {
-        Alert.alert("Ошибка", "Заполните данные организации и реквизиты");
-        return;
-      }
     }
     if (!identifier || !password || !confirmPassword) {
       Alert.alert("Ошибка", "Заполните все поля");
@@ -75,19 +61,56 @@ export default function AuthScreen() {
       return;
     }
 
-    login(role);
-    if (role === "Клиент") {
-      router.replace(ROUTES.QUIZ);
-    }
-    else {
-      router.replace(ROUTES.MAIN);
+    try {
+      await authService.register(Number(identifier), password, role);
+
+      const loginResponse = await authService.login(identifier, password);
+
+      login(role);
+
+      if (role === "Клиент") {
+        router.replace(ROUTES.QUIZ);
+      } else {
+        router.replace(ROUTES.MAIN);
+      }
+    } catch (error: any) {
+      console.error(error);
+      // Обработка ошибок
+      // Если ошибка случилась на шаге регистрации
+      const errorMessage =
+        error.response?.data?.message || error.message || "Ошибка регистрации";
+
+      Alert.alert(
+        "Ошибка",
+        typeof errorMessage === "string" ? errorMessage : "Что-то пошло не так",
+      );
     }
   };
 
-  const handleLogin = () => {
-    if (identifier === "1234" && password === "1234") {
-      login(role);
-      router.replace(ROUTES.MAIN);
+  const handleLogin = async () => {
+    if (identifier !== "" && password !== "") {
+      try {
+        const loginResponse = await authService.login(identifier, password);
+
+        login(role);
+
+        router.replace(ROUTES.MAIN);
+      } catch (error: any) {
+        console.error(error);
+        // Обработка ошибок
+        // Если ошибка случилась на шаге регистрации
+        const errorMessage =
+          error.response?.data?.message ||
+          error.message ||
+          "Ошибка авторизации";
+
+        Alert.alert(
+          "Ошибка",
+          typeof errorMessage === "string"
+            ? errorMessage
+            : "Что-то пошло не так",
+        );
+      }
     } else {
       Alert.alert("Ошибка", "Неверные данные");
     }
@@ -173,75 +196,6 @@ export default function AuthScreen() {
                   />
                 </View>
               )}
-            </View>
-          )}
-
-          {isRegisterMode && (role === "Агент" || role === "Юрист") && (
-            <View style={{ width: "100%", marginBottom: 10 }}>
-              <ThemedText style={{ marginBottom: 8, fontWeight: "600" }}>
-                Тип организации
-              </ThemedText>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  marginBottom: 12,
-                }}
-              >
-                {orgTypes.map((t) => (
-                  <TouchableOpacity
-                    key={t}
-                    style={[
-                      {
-                        padding: 10,
-                        borderRadius: 8,
-                        borderWidth: 1,
-                        borderColor: theme.outlineVariant,
-                        width: "31%",
-                        alignItems: "center",
-                      },
-                      orgType === t && {
-                        backgroundColor: theme.primaryContainer,
-                        borderColor: theme.primary,
-                      },
-                    ]}
-                    onPress={() => setOrgType(t)}
-                  >
-                    <ThemedText style={{ fontSize: 12 }}>{t}</ThemedText>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              <TextInput
-                style={styles.input}
-                placeholder="ИНН (для автозаполнения)"
-                placeholderTextColor={theme.icon}
-                value={inn}
-                onChangeText={setInn}
-                keyboardType="number-pad"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Наименование организации"
-                placeholderTextColor={theme.icon}
-                value={companyName}
-                onChangeText={setCompanyName}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="БИК банка"
-                placeholderTextColor={theme.icon}
-                value={bik}
-                onChangeText={setBik}
-                keyboardType="number-pad"
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Расчетный счет"
-                placeholderTextColor={theme.icon}
-                value={bankAccount}
-                onChangeText={setBankAccount}
-                keyboardType="number-pad"
-              />
             </View>
           )}
 

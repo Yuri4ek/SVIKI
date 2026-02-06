@@ -38,9 +38,6 @@ export default function RootLayout() {
           options={{ headerShown: false }}
         />
 
-        {/* Экран верификации */}
-        <Stack.Screen name="verification" options={{ headerShown: false }} />
-
         {/* Основная группа с табами */}
         <Stack.Screen name="(main)" options={{ headerShown: false }} />
       </Stack>
