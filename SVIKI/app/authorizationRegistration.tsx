@@ -14,7 +14,13 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 
-import { useUserStore, UserRole } from "@/store";
+import {
+  useUserStore,
+  UserRole,
+  RoleTranslation,
+  RoleDisplay,
+  REGISTRATION_ROLES_UI,
+} from "@/store";
 import { authService } from "@/api";
 
 import { ThemedText } from "@/components/themed-text";
@@ -25,7 +31,7 @@ import { createAuthStyles } from "@/styles";
 export default function AuthScreen() {
   const router = useRouter();
 
-  const [role, setRole] = useState<UserRole>("Клиент");
+  const [role, setRole] = useState<UserRole>("Client");
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -39,7 +45,7 @@ export default function AuthScreen() {
   const theme = Colors[colorScheme];
   const styles = useMemo(() => createAuthStyles(theme), [theme]);
 
-  const roles: UserRole[] = ["Клиент", "Агент", "Юрист"];
+  const roles = REGISTRATION_ROLES_UI;
 
   const login = useUserStore((state) => state.login);
 
@@ -68,7 +74,7 @@ export default function AuthScreen() {
 
       login(role);
 
-      if (role === "Клиент") {
+      if (role === "Client") {
         router.replace(ROUTES.QUIZ);
       } else {
         router.replace(ROUTES.MAIN);
@@ -91,8 +97,10 @@ export default function AuthScreen() {
     if (identifier !== "" && password !== "") {
       try {
         const loginResponse = await authService.login(identifier, password);
+        
+        const serverRole = loginResponse.role as UserRole;
 
-        login(role);
+        login(serverRole);
 
         router.replace(ROUTES.MAIN);
       } catch (error: any) {
@@ -185,7 +193,7 @@ export default function AuthScreen() {
                           borderBottomColor: theme.outlineVariant,
                         }}
                         onPress={() => {
-                          setRole(item);
+                          setRole(RoleTranslation[item]);
                           setIsRolePickerOpen(false);
                           // saveUserRole удален, чтобы не вызывать ошибку
                         }}

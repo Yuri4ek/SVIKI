@@ -18,17 +18,20 @@ export const RoleGuard = ({
   const role = useUserStore((state) => state.role);
 
   switch (role) {
-    case 'Клиент':
+    case "Client":
       return <>{client ?? <Placeholder title="Кабинет Клиента" />}</>;
 
-    case 'Агент':
+    case "Agent":
       return <>{agent ?? <Placeholder title="Кабинет Агента" />}</>;
 
-    case 'Юрист':
+    case "Lawyer":
       return <>{lawyer ?? <Placeholder title="Кабинет Юриста" />}</>;
 
-    case 'Админ':
+    case "Admin":
       return <>{admin ?? <Placeholder title="Панель Администратора" />}</>;
+    
+    case "Manager":
+      return <>{admin ?? <Placeholder title="Панель Менеджера" />}</>;
 
     default:
       return <Placeholder title="Роль не определена" />;
