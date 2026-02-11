@@ -1,17 +1,15 @@
-// --- FILE: ./components/ui/chatComponents.tsx ---
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
+  Platform,
   KeyboardAvoidingView,
-  Platform
+  FlatList,
 } from "react-native";
-import { FlashList } from "@shopify/flash-list";
-import { MessageModel } from "@/api/chatService";
 
-// Единичный элемент списка контактов
+// 1. Элемент списка контактов
 export const ContactItem = ({ item, onPress, styles }: any) => (
   <TouchableOpacity
     style={styles.contactItem}
@@ -22,13 +20,22 @@ export const ContactItem = ({ item, onPress, styles }: any) => (
       <Text style={styles.avatarText}>{item.avatar}</Text>
     </View>
     <View style={styles.contactInfo}>
-      <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-         <Text style={styles.contactName}>{item.name}</Text>
-         {item.unread > 0 && (
-           <View style={{backgroundColor: 'red', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2}}>
-             <Text style={{color: 'white', fontSize: 10, fontWeight: 'bold'}}>{item.unread}</Text>
-           </View>
-         )}
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <Text style={styles.contactNameText}>{item.name}</Text>
+        {item.unread > 0 && (
+          <View
+            style={{
+              backgroundColor: "red",
+              borderRadius: 10,
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+            }}
+          >
+            <Text style={{ color: "white", fontSize: 10, fontWeight: "bold" }}>
+              {item.unread}
+            </Text>
+          </View>
+        )}
       </View>
       <Text style={styles.lastMessage} numberOfLines={1}>
         {item.lastMsg}
@@ -37,16 +44,25 @@ export const ContactItem = ({ item, onPress, styles }: any) => (
   </TouchableOpacity>
 );
 
-interface ChatOverlayProps {
-  user: string;
-  messages: MessageModel[]; // Используем типизацию
-  onClose: () => void;
+// 2. Интерфейс для пропсов (Добавляем его, чтобы пропала ошибка)
+export interface ChatUIProps {
+  messages: any[];
   onSend: (text: string) => void;
   styles: any;
+  headerTitle?: string;
+  onBack?: () => void;
+  showBackBtn?: boolean;
 }
 
-// Окно активного чата (Overlay)
-export const ChatOverlay = ({ user, messages, onClose, onSend, styles }: ChatOverlayProps) => {
+// 3. Основной компонент Чата
+export const ChatUI = ({
+  messages,
+  onSend,
+  styles,
+  headerTitle,
+  onBack,
+  showBackBtn,
+}: ChatUIProps) => {
   const [text, setText] = React.useState("");
 
   const handleSend = () => {
@@ -56,92 +72,142 @@ export const ChatOverlay = ({ user, messages, onClose, onSend, styles }: ChatOve
     }
   };
 
-  // Функция для форматирования времени
   const formatTime = (dateString: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  return (
-    <View style={styles.chatOverlay}>
-      {/* Хедер */}
-      <View style={styles.chatHeader}>
-        <TouchableOpacity onPress={onClose} style={styles.backButton}>
-           {/* Можно заменить на иконку Ionicons */}
-          <Text style={styles.backButtonText}>←</Text> 
-        </TouchableOpacity>
-        <View>
-          <Text style={styles.contactName}>{user}</Text>
-          <Text style={{fontSize: 12, color: '#888'}}>В сети</Text>
-        </View>
-      </View>
+  // Стабилизация массива сообщений
+  const stableMessages = useMemo(() => messages || [], [messages]);
 
-      {/* Список сообщений */}
-      <View style={styles.messageList}>
-        <FlashList
-          data={messages}
-          estimatedItemSize={60}
-          inverted={true} // !!! ВАЖНО: Список перевернут (новые снизу)
-          contentContainerStyle={{ paddingVertical: 16 }}
-          renderItem={({ item }: { item: any }) => {
-            const isMy = item.isMy;
-            return (
-              <View
-                style={[
-                  styles.bubble,
-                  isMy ? styles.sentBubble : styles.receivedBubble,
-                ]}
-              >
-                <Text
+  return (
+    <View style={styles.chatContainer}>
+      {/* Хедер */}
+      {headerTitle && (
+        <View style={styles.chatHeader}>
+          {showBackBtn && (
+            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+              <Text style={styles.backButtonText}>←</Text>
+            </TouchableOpacity>
+          )}
+          <View>
+            <Text style={styles.contactName}>{headerTitle}</Text>
+            <Text style={styles.statusText}>В сети</Text>
+          </View>
+        </View>
+      )}
+
+      {/* ИСПРАВЛЕНИЕ КЛАВИАТУРЫ:
+          behavior="height" на Android обычно лучше всего работает в связке с flex: 1.
+          Это заставляет View сжиматься, когда клавиатура поднимается.
+      */}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 90}
+      >
+        <View style={{ flex: 1 }}>
+          <FlatList
+            data={stableMessages}
+            keyExtractor={(item) =>
+              item.id ? item.id.toString() : Math.random().toString()
+            }
+            inverted={true}
+            contentContainerStyle={{
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+            }}
+            keyboardDismissMode="on-drag"
+            renderItem={({ item }) => {
+              const isMy = item.isMy;
+              return (
+                <View
                   style={[
-                    styles.messageText,
-                    isMy ? styles.sentText : styles.receivedText,
+                    styles.bubble,
+                    isMy ? styles.sentBubble : styles.receivedBubble,
                   ]}
                 >
-                  {item.text || item.content}
-                </Text>
-                {/* Время сообщения */}
-                <Text style={[
-                  styles.timeText,
-                  isMy ? styles.sentTimeText : styles.receivedTimeText
-                ]}>
-                  {formatTime(item.sentAt)}
-                </Text>
-              </View>
-            );
-          }}
-        />
-      </View>
-
-      {/* Поле ввода */}
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"} 
-        keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
-      >
-        <View style={styles.inputContainer}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.attachIcon}>+</Text>
-          </TouchableOpacity>
-          
-          <TextInput
-            style={styles.input}
-            placeholder="Сообщение..."
-            placeholderTextColor="#999"
-            value={text}
-            onChangeText={setText}
-            multiline
+                  <Text
+                    style={[
+                      styles.messageText,
+                      isMy ? styles.sentText : styles.receivedText,
+                    ]}
+                  >
+                    {item.text || item.content}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.timeText,
+                      isMy ? styles.sentTimeText : styles.receivedTimeText,
+                    ]}
+                  >
+                    {formatTime(item.sentAt)}
+                  </Text>
+                </View>
+              );
+            }}
           />
-          
-          <TouchableOpacity 
-            style={[styles.iconButton, { opacity: text.trim() ? 1 : 0.5 }]} 
-            onPress={handleSend}
-            disabled={!text.trim()}
-          >
-            <Text style={styles.sendIcon}>➤</Text>
-          </TouchableOpacity>
+        </View>
+
+        {/* Панель ввода */}
+        <View style={styles.inputWrapper}>
+          <View style={styles.inputContainer}>
+            <TouchableOpacity style={styles.iconButton}>
+              <Text style={styles.attachIcon}>+</Text>
+            </TouchableOpacity>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Сообщение..."
+              placeholderTextColor="#999"
+              value={text}
+              onChangeText={setText}
+              multiline
+            />
+
+            <TouchableOpacity
+              style={[styles.iconButton, { opacity: text.trim() ? 1 : 0.5 }]}
+              onPress={handleSend}
+              disabled={!text.trim()}
+            >
+              <Text style={styles.sendIcon}>➤</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
+    </View>
+  );
+};
+
+// 4. Обертка (Overlay) для сотрудников
+export const ChatOverlay = ({
+  user,
+  messages,
+  onClose,
+  onSend,
+  styles,
+}: any) => {
+  return (
+    <View
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 100,
+        backgroundColor: "#fff",
+      }}
+    >
+      <ChatUI
+        messages={messages}
+        onSend={onSend}
+        styles={styles}
+        headerTitle={user}
+        showBackBtn={true}
+        onBack={onClose}
+      />
     </View>
   );
 };

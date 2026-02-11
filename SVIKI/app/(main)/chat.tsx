@@ -1,244 +1,356 @@
 // --- FILE: ./app/(main)/chat.tsx ---
-import React, { useState, useRef, useMemo, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useMemo,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   useColorScheme,
   Dimensions,
   ActivityIndicator,
+  TextInput,
+  ScrollView,
+  FlatList,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { FlashList } from "@shopify/flash-list";
 import { createChatStyles } from "@/styles";
 import { RoleGuard } from "@/components";
-import { ChatOverlay, ContactItem } from "@/components/ui";
+import {
+  ChatOverlay,
+  ContactItem,
+  ChatUI,
+} from "@/components/ui/chatComponents";
 import { chatService, ChatContact, MessageModel } from "@/api/chatService";
 
 const { width } = Dimensions.get("window");
 
-// ... (StaffChatView) ... 
-
+// ==========================================
+// 1. ВИД ДЛЯ СОТРУДНИКОВ
+// ==========================================
 const StaffChatView = ({ styles, userRole }: any) => {
-  // ... (прежний код стейтов activeTab, tabs, listsData, loading) ...
-  const scrollRef = useRef<ScrollView>(null);
-  const [activeTab, setActiveTab] = useState(0);
-  const [tabs, setTabs] = useState<string[]>([]);
-  const [listsData, setListsData] = useState<ChatContact[][]>([]);
+  const [allContacts, setAllContacts] = useState<ChatContact[]>([]);
+  const [filteredContacts, setFilteredContacts] = useState<ChatContact[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-
-  const [selectedContact, setSelectedContact] = useState<ChatContact | null>(null);
+  const [selectedContact, setSelectedContact] = useState<ChatContact | null>(
+    null,
+  );
   const [messages, setMessages] = useState<MessageModel[]>([]);
-  const [chatLoading, setChatLoading] = useState(false);
-  const [activeDialogId, setActiveDialogId] = useState<number | null>(null);
 
-  // 1. Загрузка контактов (без изменений)
   useEffect(() => {
     loadContacts();
   }, [userRole]);
 
-  const loadContacts = async () => {
-     // ... (код загрузки контактов оставляем как был в исходнике) ...
-      setLoading(true);
-      try {
-        let loadedTabs: string[] = [];
-        let loadedData: ChatContact[][] = [];
-        if (userRole === "Admin" || userRole === "Manager") {
-          loadedTabs = ["Клиенты", "Агенты", "Юристы"];
-          const [clients, agents, lawyers] = await Promise.all([
-            chatService.getContacts("Admin"),
-            chatService.getAdminAgentContacts(),
-            chatService.getAdminLawyerContacts(),
-          ]);
-          loadedData = [clients, agents, lawyers];
-        } else if (userRole === "Lawyer") {
-          loadedTabs = ["Клиенты"];
-          const clients = await chatService.getContacts("Lawyer");
-          loadedData = [clients];
-        } else if (userRole === "Agent") {
-          loadedTabs = ["Клиенты", "Менеджеры"];
-          const clients = await chatService.getContacts("Agent");
-          // Заглушка, используйте реальный метод API
-          const managers = await chatService.getContacts("Agent"); 
-          loadedData = [clients, managers];
-        }
-        setTabs(loadedTabs);
-        setListsData(loadedData);
-      } catch (error) {
-        console.error("Ошибка контактов:", error);
-      } finally {
-        setLoading(false);
-      }
-  };
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredContacts(allContacts);
+    } else {
+      const lower = searchQuery.toLowerCase();
+      setFilteredContacts(
+        allContacts.filter((c) => c.name.toLowerCase().includes(lower)),
+      );
+    }
+  }, [searchQuery, allContacts]);
 
-  // 2. Открытие чата (ИСПРАВЛЕНИЕ ПОРЯДКА)
-  const handleContactPress = async (contact: ChatContact) => {
-    setSelectedContact(contact);
-    setChatLoading(true);
+  const loadContacts = async () => {
+    setLoading(true);
     try {
-      const history = await chatService.getChatHistory(contact.receiverId);
-      // Бэкенд обычно шлет [Старое -> Новое].
-      // Для inverted списка нам нужно [Новое -> Старое].
-      // Делаем .reverse()
-      setMessages([...history.messages].reverse());
-      setActiveDialogId(history.dialogId);
-    } catch (error) {
-      Alert.alert("Ошибка", "Не удалось загрузить чат");
-      setSelectedContact(null);
+      const data = await chatService.getContacts(userRole);
+      setAllContacts(data || []);
+      setFilteredContacts(data || []);
+    } catch (e) {
+      setAllContacts([]);
+      setFilteredContacts([]);
     } finally {
-      setChatLoading(false);
+      setLoading(false);
     }
   };
 
-  // 3. Отправка (ИСПРАВЛЕНИЕ: ДОБАВЛЯЕМ В НАЧАЛО)
-  const handleSend = async (text: string) => {
-    if (!selectedContact || !text.trim()) return;
+  // --- ИСПРАВЛЕНИЕ 1: Вычисляем isMy при открытии чата ---
+  const handleContactPress = async (contact: ChatContact) => {
+    setSelectedContact(contact);
+    try {
+      const history = await chatService.getChatHistory(contact.receiverId);
 
-    // Оптимистичное добавление: В НАЧАЛО МАССИВА
+      // Маппинг сообщений:
+      // Если отправитель (msg.senderId) НЕ равен ID контакта (contact.receiverId),
+      // значит отправитель - это Я.
+      const processedMessages = history.messages.map((msg) => ({
+        ...msg,
+        isMy: msg.senderId !== contact.receiverId,
+      }));
+
+      setMessages([...processedMessages].reverse());
+    } catch (error) {
+      setMessages([]);
+    }
+  };
+
+  const handleSend = async (text: string) => {
+    if (!selectedContact) return;
     const tempMsg: MessageModel = {
       id: Date.now(),
       content: text,
-      senderId: 0, 
+      senderId: 0,
       receiverId: selectedContact.receiverId,
-      sentAt: new Date().toISOString(), // Сохраняем ISO
+      sentAt: new Date().toISOString(),
       isRead: false,
-      // @ts-ignore
-      isMy: true,
+      isMy: true, // Локальное сообщение всегда мое
     };
-    
-    // Inverted list: [New, ...Old]
     setMessages((prev) => [tempMsg, ...prev]);
 
     try {
-      const dId = activeDialogId || selectedContact.dialogId;
-      const newMsg = await chatService.sendMessage(
+      await chatService.sendMessage(
         selectedContact.receiverId,
         text,
         null,
-        dId,
+        selectedContact.dialogId,
       );
-      // Обновляем сообщение (заменяем временный ID на реальный)
-      setMessages((prev) =>
-        prev.map((m) => (m.id === tempMsg.id ? { ...newMsg, isMy: true } : m)),
-      );
-    } catch (error) {
-      Alert.alert("Ошибка", "Не удалось отправить");
-      setMessages((prev) => prev.filter((m) => m.id !== tempMsg.id));
-    }
+    } catch (e) {}
   };
-  
-  // ... (Остальной код рендера StaffView без изменений: табы, FlashList контактов) ...
-  const handleTabPress = (index: number) => {
-    setActiveTab(index);
-    scrollRef.current?.scrollTo({ x: index * width, animated: true });
-  };
-  
-  const renderList = (data: ChatContact[]) => (
-     <View style={{ width, flex: 1 }}>
-      <FlashList
-        data={data}
-        estimatedItemSize={70}
-        renderItem={({ item }) => (
-          <ContactItem
-            item={{
-              name: item.name,
-              lastMsg: item.lastMessage || "Нет сообщений",
-              avatar: item.name.charAt(0).toUpperCase(),
-              unread: item.unreadCount,
-            }}
-            onPress={() => handleContactPress(item)}
-            styles={styles}
-          />
-        )}
-        ListEmptyComponent={<Text style={{ textAlign: "center", marginTop: 20 }}>Список пуст</Text>}
-      />
-    </View>
-  );
 
   return (
-    <>
-      <View style={styles.tabBar}>
-        {tabs.map((tab, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.tabButton, activeTab === index && styles.activeTabButton]}
-            onPress={() => handleTabPress(index)}
-          >
-            <Text style={[styles.tabText, activeTab === index && styles.activeTabText]}>
-              {tab}
-            </Text>
-          </TouchableOpacity>
-        ))}
+    <View style={{ flex: 1 }}>
+      <View style={{ paddingHorizontal: 16, marginBottom: 10 }}>
+        <TextInput
+          style={{
+            backgroundColor: styles.tabBar.backgroundColor,
+            padding: 10,
+            borderRadius: 12,
+            color: "#000",
+            fontSize: 14,
+          }}
+          placeholder="Поиск..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" style={{ marginTop: 50, color: styles.activeTabButton.backgroundColor }} />
+        <ActivityIndicator size="large" style={{ marginTop: 20 }} />
       ) : (
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={(e) => setActiveTab(Math.round(e.nativeEvent.contentOffset.x / width))}
-          scrollEventThrottle={16}
-        >
-          {listsData.map((list, i) => (<React.Fragment key={i}>{renderList(list)}</React.Fragment>))}
-        </ScrollView>
+        <FlatList
+          data={filteredContacts}
+          keyExtractor={(item) => item.receiverId.toString()}
+          renderItem={({ item }) => (
+            <ContactItem
+              item={{
+                name: item.name,
+                lastMsg: item.lastMessage || "Нет сообщений",
+                avatar: item.name.charAt(0).toUpperCase(),
+                unread: item.unreadCount,
+              }}
+              onPress={() => handleContactPress(item)}
+              styles={styles}
+            />
+          )}
+          ListEmptyComponent={
+            <Text style={{ textAlign: "center", marginTop: 20 }}>
+              Контакты не найдены
+            </Text>
+          }
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
       )}
 
       {selectedContact && (
         <ChatOverlay
           user={selectedContact.name}
-          // Передаем как есть, массив уже перевернут
-          messages={messages.map((m) => ({
-            ...m,
-            text: m.content || (m.attachment ? "[Файл]" : ""),
-            isMy: m.isMy || m.senderId !== selectedContact.receiverId,
-          }))}
+          messages={messages}
           onClose={() => setSelectedContact(null)}
           onSend={handleSend}
           styles={styles}
         />
       )}
-    </>
+    </View>
   );
 };
 
-const ClientChatView = ({ styles }: { styles: any }) => {
-    // ... копируем логику ClientChatView из исходника, но убеждаемся что используем новые styles ...
-    // В исходном коде ClientChatView уже использует inverted и prepending (добавление в начало), 
-    // поэтому основная проблема там была в CSS.
-    // Просто удостоверьтесь, что при рендере используется правильный formatTime
-    
-    // ВАЖНОЕ ИЗМЕНЕНИЕ ДЛЯ ClientChatView в renderItem:
-    /*
-     <Text style={[styles.timeText, isMy ? styles.sentTimeText : styles.receivedTimeText]}>
-        {new Date(item.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-     </Text>
-    */
-   
-   // Для краткости я не дублирую весь ClientChatView, так как логика там была верной (inverted),
-   // проблема решится обновлением styles/chat.styles.ts, который привязан к этому компоненту.
-   // Главное, чтобы <FlashList inverted /> оставался true.
-   
-   // ...
-   
-   // Возвращаем заглушку, чтобы код был валидным, в реальном проекте оставьте логику ClientChatView как есть,
-   // только обновите классы стилей на те, что мы написали выше (bubble, sentBubble и т.д.).
-   return <StaffChatView styles={styles} userRole="Agent" />; // Временно для демонстрации
+// ==========================================
+// 2. ИЗОЛИРОВАННЫЙ КОМПОНЕНТ КОМНАТЫ ЧАТА
+// ==========================================
+const ChatRoomWrapper = ({ role, styles }: { role: string; styles: any }) => {
+  const [contact, setContact] = useState<ChatContact | null>(null);
+  const [messages, setMessages] = useState<MessageModel[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const initRoom = async () => {
+      try {
+        const contacts = await chatService.getContacts("Client");
+
+        let found: ChatContact | undefined;
+        if (role === "Агент") found = contacts[0];
+        else if (role === "Юрист") found = contacts[1];
+        else if (role === "Менеджер") found = contacts[2];
+        else if (role === "Админ") found = contacts[3];
+
+        if (isMounted && found) {
+          setContact(found);
+          try {
+            const history = await chatService.getChatHistory(found.receiverId);
+
+            // --- ИСПРАВЛЕНИЕ 2: Вычисляем isMy для Клиента ---
+            const processedMessages = history.messages.map((msg) => ({
+              ...msg,
+              isMy: msg.senderId !== found!.receiverId, // Используем найденный ID контакта
+            }));
+
+            setMessages([...processedMessages].reverse());
+          } catch (e) {
+            setMessages([]);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    initRoom();
+    return () => {
+      isMounted = false;
+    };
+  }, [role]);
+
+  const handleSend = async (text: string) => {
+    if (!contact) return;
+    const newMsg: MessageModel = {
+      id: Date.now(),
+      content: text,
+      senderId: 0,
+      receiverId: contact.receiverId,
+      sentAt: new Date().toISOString(),
+      isRead: false,
+      isMy: true,
+    };
+    setMessages((prev) => [newMsg, ...prev]);
+
+    try {
+      await chatService.sendMessage(
+        contact.receiverId,
+        text,
+        null,
+        contact.dialogId,
+      );
+    } catch (e) {
+      Alert.alert("Ошибка", "Не удалось отправить");
+    }
+  };
+
+  if (loading)
+    return (
+      <View style={{ flex: 1, justifyContent: "center" }}>
+        <ActivityIndicator />
+      </View>
+    );
+
+  if (!contact) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 20,
+        }}
+      >
+        <Text style={{ fontSize: 16, color: "#888", textAlign: "center" }}>
+          {role} еще не назначен.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <ChatUI
+      messages={messages}
+      onSend={handleSend}
+      styles={styles}
+      headerTitle={contact.name}
+      showBackBtn={false}
+    />
+  );
 };
 
-// ... (ChatScreen Main Component) ...
+// ==========================================
+// 3. ВИД ДЛЯ КЛИЕНТА
+// ==========================================
+const ClientChatView = ({ styles }: { styles: any }) => {
+  const [activeTab, setActiveTab] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const ROLES = ["Агент", "Юрист", "Менеджер", "Админ"];
+
+  const handleTabPress = (index: number) => {
+    setActiveTab(index);
+    scrollRef.current?.scrollTo({ x: index * width, animated: true });
+  };
+
+  const handleScroll = (event: any) => {
+    const index = Math.round(event.nativeEvent.contentOffset.x / width);
+    setActiveTab(index);
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <View style={styles.tabBar}>
+        {ROLES.map((role, index) => (
+          <TouchableOpacity
+            key={role}
+            style={[
+              styles.tabButton,
+              activeTab === index && styles.activeTabButton,
+            ]}
+            onPress={() => handleTabPress(index)}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === index && styles.activeTabText,
+              ]}
+            >
+              {role}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        scrollEventThrottle={16}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ width: width * ROLES.length }}
+      >
+        {ROLES.map((role) => (
+          <View key={role} style={{ width: width, height: "100%" }}>
+            <ChatRoomWrapper role={role} styles={styles} />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
 const ChatScreen = () => {
   const theme = useColorScheme() ?? "light";
+  // Создаем стили один раз
   const styles = useMemo(() => createChatStyles(theme), [theme]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <RoleGuard
-        client={<ClientChatView styles={styles} />} // Проверьте, что ClientChatView использует обновленные стили
+        client={<ClientChatView styles={styles} />}
         agent={<StaffChatView styles={styles} userRole="Agent" />}
         lawyer={<StaffChatView styles={styles} userRole="Lawyer" />}
         admin={<StaffChatView styles={styles} userRole="Admin" />}
