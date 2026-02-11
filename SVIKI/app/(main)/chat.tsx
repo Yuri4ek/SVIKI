@@ -26,7 +26,7 @@ import {
   ContactItem,
   ChatUI,
 } from "@/components/ui/chatComponents";
-import { chatService, ChatContact, MessageModel } from "@/api/chatService";
+import { chatService, ChatContact, MessageModel } from "@/api";
 
 const { width } = Dimensions.get("window");
 

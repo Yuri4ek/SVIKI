@@ -7,3 +7,4 @@ export { createSettingsStyles } from "./settings.styles";
 export { createQuizStyles } from "./quiz.styles";
 export { createAuthStyles } from "./auth.styles";
 export { createVerificationStyles } from "./verification.styles";
+export { createProgramsStyles } from "./programs.styles";

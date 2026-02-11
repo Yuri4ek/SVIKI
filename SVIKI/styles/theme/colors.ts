@@ -53,6 +53,7 @@ export const Colors = {
     icon: '#49454F',
     tabIconDefault: '#49454F',
     tabIconSelected: primaryLight,
+    text: '#1D1B20',
   },
   dark: {
     // Primary
@@ -103,5 +104,6 @@ export const Colors = {
     icon: '#938F99',
     tabIconDefault: '#938F99',
     tabIconSelected: primaryDark,
+    text: '#E6E1E5',
   },
 };

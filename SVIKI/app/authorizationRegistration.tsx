@@ -17,8 +17,8 @@ import { FlashList } from "@shopify/flash-list";
 import {
   useUserStore,
   UserRole,
-  RoleTranslation,
   RoleDisplay,
+  RoleTranslation,
   REGISTRATION_ROLES_UI,
 } from "@/store";
 import { authService } from "@/api";
@@ -164,7 +164,6 @@ export default function AuthScreen() {
                 />
               </TouchableOpacity>
 
-              {/* 2. Замена map на FlashList */}
               {isRolePickerOpen && (
                 <View
                   style={{
@@ -173,8 +172,6 @@ export default function AuthScreen() {
                     marginTop: 4,
                     borderWidth: 1,
                     borderColor: theme.outlineVariant,
-                    // FlashList требует явной высоты или flex-контейнера.
-                    // Т.к. элементов мало, считаем высоту динамически (примерно 55px на элемент)
                     height: roles.length * 55,
                     overflow: "hidden",
                   }}
@@ -198,7 +195,7 @@ export default function AuthScreen() {
                           // saveUserRole удален, чтобы не вызывать ошибку
                         }}
                       >
-                        <ThemedText>{item}</ThemedText>
+                        <ThemedText>{RoleDisplay[item as UserRole]}</ThemedText>
                       </TouchableOpacity>
                     )}
                   />
