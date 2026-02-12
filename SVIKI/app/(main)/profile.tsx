@@ -222,6 +222,20 @@ export default function ProfilePage() {
             userRole={userRole}
           />
         }
+        admin={
+          <ClientProfile
+            styles={styles}
+            logout={handleLogout}
+            userRole={userRole}
+          />
+        }
+        manager={
+          <ClientProfile
+            styles={styles}
+            logout={handleLogout}
+            userRole={userRole}
+          />
+        }
       />
     </View>
   );

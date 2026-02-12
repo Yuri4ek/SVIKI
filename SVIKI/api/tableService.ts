@@ -1,21 +1,54 @@
+// --- FILE: ./api/tableService.ts ---
 import axios from 'axios';
-import { API_URL } from './api-url';
+import * as SecureStore from 'expo-secure-store';
+import { API_URL } from './api-url'; // Убедитесь, что путь верный
+
+// Адрес контроллера (как в C#: [Route("api/service-table")])
+const API_URL_Service = API_URL + "/service-table";
 
 export interface IServiceTableItem {
   id: number;
-  serviceColumn: string;
-  initialColumn: string;
-  standardColumn: string;
-  optimalColumn: string;
+  serviceColumn: string;  // Название услуги
+  initialColumn: string;  // Данные для Initial
+  standardColumn: string; // Данные для Standard
+  optimalColumn: string;  // Данные для Optimal
+  
+  // Локальные флаги для фронтенда
+  isNew?: boolean;
+  isEdited?: boolean;
 }
 
-// Получение всех записей таблицы
+const api = axios.create({
+  baseURL: API_URL_Service,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// Добавляем токен к запросам
+api.interceptors.request.use(async (config) => {
+  const token = await SecureStore.getItemAsync('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
 export const fetchServiceTable = async (): Promise<IServiceTableItem[]> => {
-  const response = await axios.get<IServiceTableItem[]>(`${API_URL}/service-table`);
+  const response = await api.get<IServiceTableItem[]>('');
   return response.data;
 };
 
-// Обновление одной записи (для администратора)
-export const updateServiceTableItem = async (id: number, data: IServiceTableItem): Promise<void> => {
-  await axios.put(`${API_URL}/service-table/${id}`, data);
+export const createServiceTableItem = async (item: IServiceTableItem): Promise<IServiceTableItem> => {
+  // Убираем локальные флаги перед отправкой
+  const { isNew, isEdited, id, ...data } = item;
+  // id не отправляем, если он генерируется базой, или отправляем 0
+  const response = await api.post<IServiceTableItem>('', data);
+  return response.data;
+};
+
+export const updateServiceTableItem = async (id: number, item: IServiceTableItem): Promise<IServiceTableItem> => {
+  const { isNew, isEdited, ...data } = item;
+  const response = await api.put<IServiceTableItem>(`/${id}`, data);
+  return response.data;
+};
+
+export const deleteServiceTableItem = async (id: number): Promise<void> => {
+  await api.delete(`/${id}`);
 };

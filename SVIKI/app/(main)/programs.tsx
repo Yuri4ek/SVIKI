@@ -12,13 +12,16 @@ import {
   useColorScheme,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { createProgramsStyles } from "@/styles/programs.styles";
 import { useUserStore } from "@/store";
 import {
   fetchServiceTable,
   updateServiceTableItem,
+  createServiceTableItem,
+  deleteServiceTableItem,
   IServiceTableItem,
-} from "@/api/tableService";
+} from "@/api";
 
 type ProgramType = "Initial" | "Standard" | "Optimal";
 
@@ -32,13 +35,14 @@ export default function ProgramsScreen() {
   const [tableData, setTableData] = useState<IServiceTableItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
-  // Активная вкладка
   const [activeTab, setActiveTab] = useState<ProgramType>("Standard");
 
-  const [editedData, setEditedData] = useState<
-    Record<number, IServiceTableItem>
-  >({});
+  // Цвета и стили
+  const isDark = theme === "dark";
+  const borderColor = isDark ? "#444" : "#ddd";
+  // Безопасно получаем цвет, если он не определен в стилях
+  const dashedColor =
+    (styles.saveButton && styles.saveButton.backgroundColor) || "#6200ee";
 
   useFocusEffect(
     useCallback(() => {
@@ -67,34 +71,79 @@ export default function ProgramsScreen() {
     setTableData((prev) =>
       prev.map((item) => {
         if (item.id === id) {
-          const updatedItem = { ...item, [field]: text };
-          setEditedData((prevEdited) => ({ ...prevEdited, [id]: updatedItem }));
-          return updatedItem;
+          return { ...item, [field]: text, isEdited: !item.isNew };
         }
         return item;
       }),
     );
   };
 
+  const handleAddRow = () => {
+    const newItem: IServiceTableItem = {
+      id: Date.now(),
+      serviceColumn: "",
+      initialColumn: "",
+      standardColumn: "",
+      optimalColumn: "",
+      isNew: true,
+    };
+    setTableData((prev) => [...prev, newItem]);
+  };
+
+  const handleDeleteRow = (id: number, isNew?: boolean) => {
+    Alert.alert("Удаление", "Вы уверены, что хотите удалить этот параметр?", [
+      { text: "Отмена", style: "cancel" },
+      {
+        text: "Удалить",
+        style: "destructive",
+        onPress: async () => {
+          if (isNew) {
+            setTableData((prev) => prev.filter((item) => item.id !== id));
+          } else {
+            try {
+              setSaving(true);
+              await deleteServiceTableItem(id);
+              setTableData((prev) => prev.filter((item) => item.id !== id));
+            } catch (error) {
+              Alert.alert("Ошибка", "Не удалось удалить запись");
+            } finally {
+              setSaving(false);
+            }
+          }
+        },
+      },
+    ]);
+  };
+
   const saveChanges = async () => {
     try {
       setSaving(true);
-      const updates = Object.values(editedData);
-      await Promise.all(
-        updates.map((item) => updateServiceTableItem(item.id, item)),
-      );
-      setEditedData({});
-      Alert.alert("Успех", "Изменения сохранены");
+      const itemsToCreate = tableData.filter((i) => i.isNew);
+      const itemsToUpdate = tableData.filter((i) => i.isEdited && !i.isNew);
+
+      if (itemsToCreate.length === 0 && itemsToUpdate.length === 0) {
+        Alert.alert("Информация", "Нет изменений для сохранения");
+        return;
+      }
+
+      for (const item of itemsToCreate) {
+        await createServiceTableItem(item);
+      }
+      for (const item of itemsToUpdate) {
+        await updateServiceTableItem(item.id, item);
+      }
+
+      Alert.alert("Успех", "Все изменения сохранены");
+      await loadData();
     } catch (error) {
+      console.error(error);
       Alert.alert("Ошибка", "Не удалось сохранить");
     } finally {
       setSaving(false);
     }
   };
 
-  // Рендер одной строки таблицы
   const renderRow = (item: IServiceTableItem, index: number) => {
-    // Определяем, какое поле показывать во второй колонке
     let value = "";
     let fieldName: keyof IServiceTableItem = "initialColumn";
 
@@ -116,30 +165,87 @@ export default function ProgramsScreen() {
     return (
       <View
         key={item.id}
-        style={[styles.row, index % 2 === 0 ? styles.rowEven : styles.rowOdd]}
+        style={[
+          styles.row,
+          index % 2 === 0 ? styles.rowEven : styles.rowOdd,
+          { flexDirection: "row", alignItems: "stretch", paddingVertical: 8 },
+        ]}
       >
         {/* КОЛОНКА 1: Название услуги */}
-        <View style={styles.columnService}>
+        <View
+          style={[
+            styles.columnService,
+            {
+              flex: 1.2,
+              flexDirection: "row",
+              alignItems: "center",
+              paddingRight: 8,
+            },
+          ]}
+        >
+          {canEdit && (
+            <TouchableOpacity
+              onPress={() => handleDeleteRow(item.id, item.isNew)}
+              style={{ padding: 6, marginRight: 4 }}
+            >
+              <Ionicons
+                name="trash-outline"
+                size={20}
+                color="red"
+                opacity={0.7}
+              />
+            </TouchableOpacity>
+          )}
+
           {canEdit ? (
             <TextInput
-              style={[styles.input, styles.inputTitle]}
+              style={[
+                styles.input,
+                styles.inputTitle,
+                { flex: 1, minHeight: 40, textAlignVertical: "center" },
+              ]}
               value={item.serviceColumn}
-              multiline
+              placeholder="Название услуги..."
+              multiline={true}
               onChangeText={(text) =>
                 handleTextChange(item.id, "serviceColumn", text)
               }
             />
           ) : (
-            <Text style={styles.cellTextTitle}>{item.serviceColumn}</Text>
+            <Text style={[styles.cellTextTitle, { flex: 1 }]}>
+              {item.serviceColumn}
+            </Text>
           )}
         </View>
 
-        {/* КОЛОНКА 2: Значение для выбранной программы */}
-        <View style={styles.columnValue}>
+        {/* Разделитель */}
+        <View style={{ width: 1, backgroundColor: borderColor }} />
+
+        {/* КОЛОНКА 2: Значение */}
+        <View
+          style={[
+            styles.columnValue,
+            {
+              flex: 1,
+              justifyContent: "center",
+              paddingLeft: 8,
+            },
+          ]}
+        >
           {canEdit ? (
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  flex: 1,
+                  width: "100%",
+                  minHeight: 40,
+                  textAlignVertical: "center",
+                },
+              ]}
               value={value}
+              placeholder="Значение..."
+              multiline={true}
               onChangeText={(text) =>
                 handleTextChange(item.id, fieldName, text)
               }
@@ -154,7 +260,7 @@ export default function ProgramsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.container, styles.center]}>
         <ActivityIndicator size="large" />
       </View>
     );
@@ -165,27 +271,10 @@ export default function ProgramsScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.container}
+      style={[styles.container, { flex: 1 }]}
     >
       <View style={styles.headerContainer}>
         <Text style={styles.screenTitle}>Программы Восстановления</Text>
-
-        {/* Кнопка сохранения (для админа) */}
-        {canEdit && Object.keys(editedData).length > 0 && (
-          <TouchableOpacity
-            style={styles.saveButton}
-            onPress={saveChanges}
-            disabled={saving}
-          >
-            {saving ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.saveButtonText}>Сохранить</Text>
-            )}
-          </TouchableOpacity>
-        )}
-
-        {/* ТАБЫ */}
         <View style={styles.tabBar}>
           {TABS.map((tab) => {
             const isActive = activeTab === tab;
@@ -206,15 +295,74 @@ export default function ProgramsScreen() {
         </View>
       </View>
 
-      {/* ИСПРАВЛЕНИЕ: 
-          1. Убрали stickyHeaderIndices (так как шапка уже вынесена наверх)
-          2. Добавили style={{ flex: 1 }}, чтобы скролл работал на всю высоту
-      */}
-      <ScrollView style={{ flex: 1 }}>
-        {/* Контент таблицы */}
-        <View style={{ paddingBottom: 40 }}>
-          {tableData.map((item, index) => renderRow(item, index))}
-        </View>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 150 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View>{tableData.map((item, index) => renderRow(item, index))}</View>
+
+        {canEdit && (
+          <View style={{ padding: 16, marginTop: 10 }}>
+            {/* 1. Кнопка Добавить */}
+            <TouchableOpacity
+              style={{
+                borderWidth: 2,
+                borderColor: dashedColor,
+                borderStyle: "dashed",
+                borderRadius: 12,
+                paddingVertical: 16,
+                alignItems: "center",
+                backgroundColor: "transparent",
+                marginBottom: 20, // ВАЖНО: Отступ снизу, чтобы не слипались
+              }}
+              onPress={handleAddRow}
+            >
+              <Text
+                style={{ color: dashedColor, fontWeight: "600", fontSize: 16 }}
+              >
+                + Добавить параметр
+              </Text>
+            </TouchableOpacity>
+
+            {/* 2. Кнопка Сохранить */}
+            <TouchableOpacity
+              style={[
+                styles.saveButton,
+                {
+                  // ВАЖНО: Сбрасываем абсолютное позиционирование из стилей
+                  position: "relative",
+                  top: "auto",
+                  right: "auto",
+                  bottom: "auto",
+
+                  width: "100%",
+                  height: 50,
+                  borderRadius: 12,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  opacity: saving ? 0.7 : 1,
+                  marginTop: 0,
+                },
+              ]}
+              onPress={saveChanges}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text
+                  style={[
+                    styles.saveButtonText,
+                    { fontSize: 16, fontWeight: "bold" },
+                  ]}
+                >
+                  Сохранить изменения
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

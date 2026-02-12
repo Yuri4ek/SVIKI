@@ -6,3 +6,10 @@ export {
   ChatModel,
   chatService,
 } from "./chatService";
+export {
+  fetchServiceTable,
+  updateServiceTableItem,
+  createServiceTableItem,
+  deleteServiceTableItem,
+  IServiceTableItem,
+} from "./tableService";
