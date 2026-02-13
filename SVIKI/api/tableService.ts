@@ -1,17 +1,15 @@
-// --- FILE: ./api/tableService.ts ---
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { API_URL } from './api-url'; // Убедитесь, что путь верный
+import { API_URL } from './api-url';
 
-// Адрес контроллера (как в C#: [Route("api/service-table")])
 const API_URL_Service = API_URL + "/service-table";
 
 export interface IServiceTableItem {
   id: number;
-  serviceColumn: string;  // Название услуги
-  initialColumn: string;  // Данные для Initial
-  standardColumn: string; // Данные для Standard
-  optimalColumn: string;  // Данные для Optimal
+  serviceColumn: string; 
+  initialColumn: string; 
+  standardColumn: string; 
+  optimalColumn: string; 
   
   // Локальные флаги для фронтенда
   isNew?: boolean;

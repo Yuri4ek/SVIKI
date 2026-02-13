@@ -5,8 +5,6 @@ import { API_URL } from './api-url';
 
 const API_URL_Chat = API_URL + "/chat";
 
-// === 1. ЭКСПОРТ ТИПОВ (DTO) ===
-
 export interface AttachmentModel {
   id: number;
   originalFileName: string;
@@ -46,8 +44,6 @@ export interface ChatModel {
   messages: MessageModel[];
 }
 
-// === 2. НАСТРОЙКА AXIOS (для GET запросов) ===
-
 const api = axios.create({
   baseURL: API_URL_Chat,
   headers: {
@@ -63,13 +59,7 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// === 3. СЕРВИС ===
-
 export const chatService = {
-  
-  /**
-   * Получение контактов в зависимости от роли
-   */
   getContacts: async (userRole: 'Client' | 'Agent' | 'Lawyer' | 'Admin' | 'Manager', search: string = '') => {
     try {
       const query = search ? `/${encodeURIComponent(search)}` : '';

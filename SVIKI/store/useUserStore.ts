@@ -5,17 +5,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export type UserRole = "Client" | "Agent" | "Lawyer" | "Admin" | "Manager";
 
 export const RoleTranslation: Record<string, UserRole> = {
-  "Клиент": "Client",
-  "Агент": "Agent",
-  "Юрист": "Lawyer"
+  Клиент: "Client",
+  Агент: "Agent",
+  Юрист: "Lawyer",
 };
 
 export const RoleDisplay: Record<UserRole, string> = {
-  "Client": "Клиент",
-  "Agent": "Агент",
-  "Lawyer": "Юрист",
-  "Admin": "Администратор",
-  "Manager": "Менеджер"
+  Client: "Клиент",
+  Agent: "Агент",
+  Lawyer: "Юрист",
+  Admin: "Администратор",
+  Manager: "Менеджер",
 };
 
 export const REGISTRATION_ROLES_UI = Object.keys(RoleTranslation);

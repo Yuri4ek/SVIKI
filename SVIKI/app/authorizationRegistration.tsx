@@ -67,29 +67,42 @@ export default function AuthScreen() {
       return;
     }
 
-    try {
-      await authService.register(Number(identifier), password, role);
-
-      const loginResponse = await authService.login(identifier, password);
-
+    // Вспомогательная функция для входа после регистрации
+    const performLogin = async () => {
+      await authService.login(identifier, password);
       login(role);
-
       if (role === "Client") {
         router.replace(ROUTES.QUIZ);
       } else {
         router.replace(ROUTES.MAIN);
       }
-    } catch (error: any) {
-      console.error(error);
-      // Обработка ошибок
-      // Если ошибка случилась на шаге регистрации
-      const errorMessage =
-        error.response?.data?.message || error.message || "Ошибка регистрации";
+    };
 
-      Alert.alert(
-        "Ошибка",
-        typeof errorMessage === "string" ? errorMessage : "Что-то пошло не так",
+    try {
+      await authService.register(Number(identifier), password, role);
+      await performLogin();
+    } catch (error: any) {
+      console.log(
+        "Первая попытка регистрации завершилась ошибкой (ожидаемо для backend v1). Пробуем повторно...",
       );
+
+      try {
+        await authService.register(Number(identifier), password, role);
+        await performLogin();
+      } catch (retryError: any) {
+        console.error(retryError);
+        const errorMessage =
+          retryError.response?.data?.message ||
+          retryError.message ||
+          "Ошибка регистрации";
+
+        Alert.alert(
+          "Ошибка",
+          typeof errorMessage === "string"
+            ? errorMessage
+            : "Что-то пошло не так",
+        );
+      }
     }
   };
 
@@ -97,7 +110,7 @@ export default function AuthScreen() {
     if (identifier !== "" && password !== "") {
       try {
         const loginResponse = await authService.login(identifier, password);
-        
+
         const serverRole = loginResponse.role as UserRole;
 
         login(serverRole);
@@ -105,8 +118,6 @@ export default function AuthScreen() {
         router.replace(ROUTES.MAIN);
       } catch (error: any) {
         console.error(error);
-        // Обработка ошибок
-        // Если ошибка случилась на шаге регистрации
         const errorMessage =
           error.response?.data?.message ||
           error.message ||
@@ -155,7 +166,7 @@ export default function AuthScreen() {
                     color: role ? theme.onSurface : theme.onSurfaceVariant,
                   }}
                 >
-                  {role ? `Роль: ${role}` : "Выберите роль"}
+                  {role ? `Роль: ${RoleDisplay[role]}` : "Выберите роль"}
                 </ThemedText>
                 <MaterialCommunityIcons
                   name="chevron-down"
@@ -165,21 +176,10 @@ export default function AuthScreen() {
               </TouchableOpacity>
 
               {isRolePickerOpen && (
-                <View
-                  style={{
-                    backgroundColor: theme.surfaceContainer,
-                    borderRadius: 12,
-                    marginTop: 4,
-                    borderWidth: 1,
-                    borderColor: theme.outlineVariant,
-                    height: roles.length * 55,
-                    overflow: "hidden",
-                  }}
-                >
+                <View style={styles.view}>
                   <FlashList
                     data={roles}
                     estimatedItemSize={55}
-                    // scrollEnabled={false} важен, т.к. мы внутри ScrollView
                     scrollEnabled={false}
                     keyExtractor={(item) => item}
                     renderItem={({ item }) => (
@@ -192,10 +192,9 @@ export default function AuthScreen() {
                         onPress={() => {
                           setRole(RoleTranslation[item]);
                           setIsRolePickerOpen(false);
-                          // saveUserRole удален, чтобы не вызывать ошибку
                         }}
                       >
-                        <ThemedText>{RoleDisplay[item as UserRole]}</ThemedText>
+                        <ThemedText>{item}</ThemedText>
                       </TouchableOpacity>
                     )}
                   />

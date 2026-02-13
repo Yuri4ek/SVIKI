@@ -11,7 +11,7 @@ import { MOCK_USER_DATA } from "@/MOCK_DATA";
 
 const { width } = Dimensions.get("window");
 
-// ВИД 1: Полная база (для Агентов, Юристов, Админа)
+// База данных пользователей (Клиенты, Агенты, Юристы)
 export const FullDatabaseView = ({ styles }: { styles: any }) => {
   const scrollRef = useRef<ScrollView>(null);
   const [activeTab, setActiveTab] = useState(0);

@@ -99,7 +99,6 @@ export default function QuizScreen() {
       <View style={[styles.card, isChild && { marginLeft: 16, opacity: 0.9 }]}>
         <Text style={styles.questionText}>{item.question}</Text>
 
-        {/* Вместо .map() используем FlashList для вариантов */}
         <View style={{ minHeight: 50 }}>
           <FlashList
             data={item.options}

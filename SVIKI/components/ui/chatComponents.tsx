@@ -97,11 +97,7 @@ export const ChatUI = ({
           </View>
         </View>
       )}
-
-      {/* ИСПРАВЛЕНИЕ КЛАВИАТУРЫ:
-          behavior="height" на Android обычно лучше всего работает в связке с flex: 1.
-          Это заставляет View сжиматься, когда клавиатура поднимается.
-      */}
+      
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}

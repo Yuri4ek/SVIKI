@@ -29,16 +29,16 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={MyTheme}>
       <Stack>
-        {/* Начальный экран (скрываем заголовок) */}
+        {/* экран заглушки */}
         <Stack.Screen name="index" options={{ headerShown: false }} />
 
-        {/* Экран авторизации (скрываем заголовок) */}
+        {/* экран авторизации */}
         <Stack.Screen
           name="authorizationRegistration"
           options={{ headerShown: false }}
         />
 
-        {/* Основная группа с табами */}
+        {/* основные страницы для пользователя */}
         <Stack.Screen name="(main)" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />

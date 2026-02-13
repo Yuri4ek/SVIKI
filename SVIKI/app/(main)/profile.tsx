@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ROUTES } from "@/constants";
-import { useUserStore } from "@/store";
+import { UserRole, useUserStore, RoleDisplay } from "@/store";
 import { createProfileStyles } from "@/styles";
 import { RoleGuard } from "@/components";
 
@@ -26,7 +26,6 @@ const MOCK_PROFILE_DATA = {
 
 interface CommonLayoutProps {
   styles: any;
-  roleName?: string;
   userRole: string;
   data: { email: string; phone: string };
   setters: { setEmail: (v: string) => void; setPhone: (v: string) => void };
@@ -36,7 +35,6 @@ interface CommonLayoutProps {
 
 const CommonProfileLayout = ({
   styles,
-  roleName,
   userRole,
   data,
   setters,
@@ -46,7 +44,7 @@ const CommonProfileLayout = ({
   return (
     <ScrollView contentContainerStyle={styles.scrollContent}>
       <Text style={styles.header}>
-        Профиль {roleName ? roleName : "Клиента"}
+        Профиль {RoleDisplay[userRole as UserRole] + "а"}
       </Text>
 
       {/* Бейдж пользователя */}
@@ -54,7 +52,7 @@ const CommonProfileLayout = ({
         <View>
           <Text style={styles.userName}>{MOCK_PROFILE_DATA.name}</Text>
           <Text style={styles.userRoleText}>
-            {userRole || "Роль не определена"}
+            {RoleDisplay[userRole as UserRole]}
           </Text>
         </View>
       </View>
@@ -144,7 +142,6 @@ const WorkerProfile = ({ styles, logout, roleName, userRole }: any) => {
   return (
     <CommonProfileLayout
       styles={styles}
-      roleName={roleName}
       userRole={userRole}
       data={{ email, phone }}
       setters={{ setEmail, setPhone }}

@@ -63,7 +63,6 @@ export const authService = {
     }
   },
 
-  // 2. Регистрация
   register: async (phone: number, password: string, role: string) => {
     try {
       const response = await api.post('/register', {
@@ -81,7 +80,6 @@ export const authService = {
     }
   },
 
-  // 3. Подтверждение кода (если нужно сразу после регистрации)
   confirmCode: async (userId: number, code: string) => {
       const response = await api.post('/confirm-code', {
         userId,
